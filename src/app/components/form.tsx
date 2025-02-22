@@ -16,12 +16,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePickerWithRange } from "./date-picker-range";
 
 const formSchema = z.object({
-  start_day: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  end_day: z.string().min(2, {
+  date_range: z.string().min(2, {
     message: "Username must be at least 2 characters.",
   }),
   days: z.string().min(2, {
@@ -49,8 +47,7 @@ export default function InterviewForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      start_day: "",
-      end_day: "",
+      date_range: "",
       days: "",
       start_time: "",
       end_time: "",
@@ -66,37 +63,28 @@ export default function InterviewForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="start_day"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>面接予定期間開始日</FormLabel>
-              <FormDescription>
-                候補日を設定する期間の開始日を指定してください。
-              </FormDescription>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} type="date" />
-              </FormControl>
-    
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="end_day"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>面接予定期間終了日</FormLabel>
-              <FormDescription>
-                候補日を設定する期間の終了日を指定してください。
-              </FormDescription>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} type="date" />
-              </FormControl>
-      
-              <FormMessage />
-            </FormItem>
-          )}
+          name="date_range"
+          render={({ field }) => {
+            const value = field.value
+              ? JSON.parse(field.value)
+              : { from: undefined, to: undefined };
+
+            return (
+              <FormItem>
+                <FormLabel>面接予定期間</FormLabel>
+                <FormDescription>
+                  候補日を設定する期間の開始日と終了日を指定してください。
+                </FormDescription>
+                <FormControl>
+                  <DatePickerWithRange
+                    value={value}
+                    onChange={(date) => field.onChange(JSON.stringify(date))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
         <FormField
           control={form.control}
@@ -164,12 +152,14 @@ export default function InterviewForm() {
               <FormControl>
                 <Input placeholder="shadcn" {...field} type="time" />
               </FormControl>
-    
+
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" className="!flex !ml-auto">
+          Submit
+        </Button>
       </form>
     </Form>
   );
