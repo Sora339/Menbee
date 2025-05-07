@@ -36,10 +36,24 @@ interface EventSettings {
   bufferAfter: number;
 }
 
+
+
 const formSchema = z.object({
-  date_range: z.string().min(2, {
-    message: "日付範囲を選択してください。",
-  }),
+    date_range: z.string()
+    .refine((val) => {
+      // 未入力または「日付を選択」状態の検出
+      if (!val) return false;
+      
+      try {
+        const parsed = JSON.parse(val);
+        // from が設定されているかチェック
+        return parsed && parsed.from !== undefined;
+      } catch {
+        return false;
+      }
+    }, {
+      message: "面接予定期間を選択してください。",
+    }),
   days: z.array(z.string()).min(1, {
     message: "少なくとも1つの曜日を選択してください。",
   }),

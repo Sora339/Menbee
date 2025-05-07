@@ -172,8 +172,8 @@ async function refreshGoogleToken(refreshToken: string): Promise<{ access_token:
     throw new Error("Refresh token is required");
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.AUTH_GOOGLE_ID;
+  const clientSecret = process.env.AUTH_GOOGLE_SECRET;
   
   if (!clientId || !clientSecret) {
     throw new Error("Google client credentials are not configured");

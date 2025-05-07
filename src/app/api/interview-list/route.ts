@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     // 日付範囲のパース
     const dateRange = JSON.parse(formData.date_range);
     const startDate = parseISO(dateRange.from);
-    const endDate = parseISO(dateRange.to);
+    const endDate = dateRange.to ? parseISO(dateRange.to) : startDate;
     
     console.log(`日付範囲: ${format(startDate, "yyyy/MM/dd")} - ${format(endDate, "yyyy/MM/dd")}`);
     
