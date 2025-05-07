@@ -17,11 +17,13 @@ import {
 interface DatePickerWithRangeProps {
   value?: DateRange;
   onChange?: (value: DateRange) => void;
+  className?: string;
 }
 
 export function DatePickerWithRange({
   value,
   onChange,
+  className,
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(value);
 
@@ -32,14 +34,14 @@ export function DatePickerWithRange({
   }, [date, onChange]);
 
   return (
-    <div className="grid gap-2">
+    <div className={`${className}`}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant="outline"
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal bg-white/50 border-indigo-200",
               !date && "text-muted-foreground"
             )}
           >
