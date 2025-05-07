@@ -338,7 +338,7 @@ export default function CalendarPageClient({
                               onChange={(date) =>
                                 field.onChange(JSON.stringify(date))
                               }
-                              className="w-[60%]"
+                              className="sm:w-[60%] w-[90%]"
                             />
                           </FormControl>
                           <FormMessage />
