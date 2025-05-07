@@ -11,7 +11,13 @@ export default function LoginButton() {
       }}
     >
       <button type="submit" className="w-fit">
-        ログイン
+        <Image
+          src="image/login.svg"
+          alt="google"
+          width={200}
+          height={40}
+          className="rounded-full"
+        ></Image>
       </button>
     </form>
   );
