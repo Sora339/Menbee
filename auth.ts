@@ -3,7 +3,6 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
-import { saveTokenToDynamoDB } from "@/lib/dynamoDB";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -14,14 +13,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, account, user }) {
       console.log("🔹 JWT Callback - account:", account);
       console.log("🔹 JWT Callback - token before update:", token);
-
-      if (account) {
-        token.accessToken = account.access_token ?? "";
-        token.refreshToken = account.refresh_token ?? "";
-
-        // ✅ DynamoDB に保存
-        await saveTokenToDynamoDB(token.email as string, token.accessToken as string, token.refreshToken as string);
-      }
 
       if (user) {
         token.user = user;
