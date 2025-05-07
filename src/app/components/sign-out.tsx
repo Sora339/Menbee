@@ -11,7 +11,7 @@ export default function LogOutButton() {
       }}
     >
       <button type="submit" className="">
-        <LogOut size={34}/>
+        <LogOut size={30}/>
       </button>
     </form>
   );

@@ -1,26 +1,45 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { GlassCard } from "@/components/ui/glass-card";
+import { useEffect, useState } from "react"
+import { GlassCard } from "@/components/ui/glass-card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Copy, Check } from "lucide-react"
 
 interface InterviewSlot {
-  date: string;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  formatted: string;
+  date: string
+  dayOfWeek: string
+  startTime: string
+  endTime: string
+  formatted: string
 }
 
-export default function InterviewSlotsList({ formData }: { formData: any }) {
-  const [slots, setSlots] = useState<InterviewSlot[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function InterviewSlotsList({
+  formData,
+  isOpen,
+  onClose,
+}: {
+  formData: any
+  isOpen: boolean
+  onClose: () => void
+}) {
+  const [slots, setSlots] = useState<InterviewSlot[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isCopied, setIsCopied] = useState(false)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
 
   const fetchInterviewSlots = async () => {
-    setLoading(true);
-    setError(null);
-    
+    setLoading(true)
+    setError(null)
+
     try {
       const response = await fetch("/api/interview-list", {
         method: "POST",
@@ -28,53 +47,114 @@ export default function InterviewSlotsList({ formData }: { formData: any }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "面接候補時間の取得に失敗しました");
+        const errorData = await response.json()
+        throw new Error(errorData.message || "面接候補時間の取得に失敗しました")
       }
 
-      const data = await response.json();
-      setSlots(data.slots || []);
+      const data = await response.json()
+      setSlots(data.slots || [])
     } catch (err) {
-      console.error("面接候補時間の取得エラー:", err);
-      setError((err as Error).message || "面接候補時間の計算に失敗しました");
+      console.error("面接候補時間の取得エラー:", err)
+      setError((err as Error).message || "面接候補時間の計算に失敗しました")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    if (formData) {
-      console.log("InterviewSlotsList - 受信データ:", formData);
+    if (formData && isOpen) {
+      console.log("InterviewSlotsList - 受信データ:", formData)
       if (!formData.calendarData || formData.calendarData.length === 0) {
-        setError("カレンダーイベントデータが存在しません。予定情報を取得してください。");
-        setLoading(false);
-        return;
+        setError("カレンダーイベントデータが存在しません。予定情報を取得してください。")
+        setLoading(false)
+        return
       }
-      fetchInterviewSlots();
+      fetchInterviewSlots()
     }
-  }, [formData]);
+  }, [formData, isOpen])
 
-  if (loading) return <div className="text-white">読み込み中...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
-  if (slots.length === 0) return <div>条件に合う面接候補時間はありません。条件を変更してください。</div>;
+  // リストをコピーする関数
+  const copyToClipboard = async () => {
+    if (slots.length === 0) return
+
+    try {
+      const textToCopy = slots.map((slot) => `・${slot.formatted}`).join("\n")
+      await navigator.clipboard.writeText(textToCopy)
+
+      setIsCopied(true)
+      setCopyMessage("面接候補時間リストがクリップボードにコピーされました")
+
+      // 3秒後にコピー状態をリセット
+      setTimeout(() => {
+        setIsCopied(false)
+        setCopyMessage(null)
+      }, 3000)
+    } catch (err) {
+      console.error("クリップボードへのコピーに失敗しました:", err)
+      setCopyMessage("クリップボードへのコピーに失敗しました")
+
+      // 3秒後にメッセージをクリア
+      setTimeout(() => {
+        setCopyMessage(null)
+      }, 3000)
+    }
+  }
+
+  const renderContent = () => {
+    if (loading) return <div className="text-center py-8">読み込み中...</div>
+    if (error) return <div className="text-red-600 text-center py-8">{error}</div>
+    if (slots.length === 0)
+      return <div className="text-center py-8">条件に合う面接候補時間はありません。条件を変更してください。</div>
+
+    return (
+      <GlassCard className="h-[400px] w-full p-4 overflow-y-scroll custom-scrollbar">
+        {slots.map((slot, index) => (
+          <div key={index} className="py-1 text-white text-center">
+            ・{slot.formatted}
+          </div>
+        ))}
+      </GlassCard>
+    )
+  }
 
   return (
-    
-    <div>
-           <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-fuchsia-500">
-                            面接候補時間一覧
-                            </h2>
-                            <GlassCard className="h-[600px] w-fit p-4 overflow-y-scroll custom-scrollbar">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        className="sm:max-w-md bg-black/40 backdrop-blur-xl border border-white/20 text-white [&>button:last-child]:hidden"
+      >
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <div>
+            <DialogTitle className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-fuchsia-600">
+              面接候補時間一覧
+            </DialogTitle>
+            <DialogDescription className="text-gray-300">以下の時間帯が面接可能な候補時間です</DialogDescription>
+          </div>
 
-      {slots.map((slot, index) => (
-        <div key={index} className="py-1 text-white text-center">
-          ・{slot.formatted}
-        </div>
-      ))}
-                            </GlassCard>
-    </div>
-  );
+          {slots.length > 0 && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 border-none bg-gradient-to-r from-cyan-600 to-indigo-600 hover:bg-gradient-to-l"
+              onClick={copyToClipboard}
+              title="リストをコピー"
+            >
+              {isCopied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4 text-violet-300" />}
+              <span className="sr-only">リストをコピー</span>
+            </Button>
+          )}
+        </DialogHeader>
+
+        {renderContent()}
+
+        <DialogFooter className="flex justify-end sm:justify-end">
+          <Button onClick={onClose} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90">
+            閉じる
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

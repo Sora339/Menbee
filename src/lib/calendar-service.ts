@@ -1,6 +1,7 @@
 // lib/calendar-service.ts
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
-import { saveTokenToDynamoDB } from "@/lib/dynamoDB";
+
+import { prisma } from "../../prisma";
+
 
 export interface CalendarEvent {
   id: string;
@@ -10,19 +11,23 @@ export interface CalendarEvent {
 }
 
 // カレンダーイベント取得関数
-export async function getCalendarEvents(email: string): Promise<CalendarEvent[]> {
+// カレンダーイベント取得関数の一部を修正
+export async function getCalendarEvents(email: string): Promise<{
+  events: CalendarEvent[];
+  authError?: boolean;
+}> {
   try {
     console.log("🔍 Fetching calendar events for user:", email);
     
-    // DynamoDBからトークンを取得
-    const tokenData = await getTokenFromDynamoDB(email);
+    // Prismaからトークンを取得
+    const tokenData = await getTokenFromPrisma(email);
     
     if (!tokenData || !tokenData.accessToken || !tokenData.refreshToken) {
       console.error("❌ No valid token found for user:", email);
-      return [];
+      return { events: [], authError: true };
     }
     
-    let { accessToken, refreshToken } = tokenData;
+    let { accessToken, refreshToken, expires_at } = tokenData;
     
     try {
       // カレンダー一覧を取得
@@ -37,41 +42,33 @@ export async function getCalendarEvents(email: string): Promise<CalendarEvent[]>
       if (calendarListResponse.status === 401) {
         console.log("🔄 Access token expired, refreshing token...");
         
-        // リフレッシュトークンの存在確認
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
-        
-        const newTokens = await refreshGoogleToken(refreshToken);
-        
-        // 新しいアクセストークンの存在確認
-        if (!newTokens.access_token) {
-          throw new Error("Failed to get new access token");
-        }
-        
-        accessToken = newTokens.access_token;
-        
-        // DynamoDBの更新
-        await saveTokenToDynamoDB(
-          email,
-          accessToken,
-          refreshToken
-        );
-        
-        // 新しいトークンで再試行
-        const retryResponse = await fetch(
-          "https://www.googleapis.com/calendar/v3/users/me/calendarList",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
+        try {
+          const newTokens = await refreshGoogleToken(refreshToken);
+          accessToken = newTokens.access_token;
+          
+          // アクセストークンのみを更新
+          await updateTokenInPrisma(email, accessToken, newTokens.expires_in);
+          
+          // 新しいトークンで再試行
+          const retryResponse = await fetch(
+            "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+          
+          if (!retryResponse.ok) {
+            throw new Error(`Failed to fetch calendar list after token refresh: ${retryResponse.statusText}`);
           }
-        );
-        
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to fetch calendar list after token refresh: ${retryResponse.statusText}`);
+          
+          const calendarListData = await retryResponse.json();
+          const events = await fetchEventsFromCalendars(calendarListData.items, accessToken);
+          return { events };
+        } catch (error) {
+          // リフレッシュトークンが無効な場合
+          console.error("❌ Refresh token is invalid:", error);
+          return { events: [], authError: true };
         }
-        
-        const calendarListData = await retryResponse.json();
-        return await fetchEventsFromCalendars(calendarListData.items, accessToken);
       }
 
       if (!calendarListResponse.ok) {
@@ -79,16 +76,30 @@ export async function getCalendarEvents(email: string): Promise<CalendarEvent[]>
       }
 
       const calendarListData = await calendarListResponse.json();
-      return await fetchEventsFromCalendars(calendarListData.items, accessToken);
+      const events = await fetchEventsFromCalendars(calendarListData.items, accessToken);
+      return { events };
       
     } catch (error) {
       console.error("❌ Error fetching calendar data:", error);
-      return [];
+      
+      // エラーメッセージからリフレッシュトークン無効を検出
+      if (
+        error instanceof Error && 
+        (
+          error.message.includes("invalid_grant") ||
+          error.message.includes("refresh token") ||
+          error.message.includes("token has been expired or revoked")
+        )
+      ) {
+        return { events: [], authError: true };
+      }
+      
+      return { events: [] };
     }
     
   } catch (error) {
     console.error("❌ Error in getCalendarEvents:", error);
-    return [];
+    return { events: [] };
   }
 }
 
@@ -132,42 +143,101 @@ async function fetchEventsFromCalendars(calendars: any[], accessToken: string): 
   return allEvents;
 }
 
-// DynamoDBからトークンを取得する関数
-async function getTokenFromDynamoDB(email: string): Promise<{ accessToken: string; refreshToken: string } | null> {
-  const client = new DynamoDBClient({
-    region: process.env.AWS_REGION || "us-east-1",
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
-  });
-
-  const params = {
-    TableName: "GoogleTokens",
-    Key: {
-      email: { S: email },
-    },
-  };
-
+// Prismaからトークンを取得する関数
+async function getTokenFromPrisma(email: string): Promise<{ 
+  accessToken: string; 
+  refreshToken: string;
+  expires_at?: number;
+} | null> {
   try {
-    const { Item } = await client.send(new GetItemCommand(params));
+    // メールアドレスからユーザーを検索
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        accounts: {
+          where: { provider: 'google' }
+        }
+      }
+    });
     
-    if (!Item || !Item.accessToken?.S || !Item.refreshToken?.S) {
+    if (!user || user.accounts.length === 0) {
+      console.error("❌ No Google account found for user:", email);
       return null;
     }
-
+    
+    const googleAccount = user.accounts[0];
+    
+    if (!googleAccount.access_token || !googleAccount.refresh_token) {
+      console.error("❌ Incomplete token information for user:", email);
+      return null;
+    }
+    
     return {
-      accessToken: Item.accessToken.S,
-      refreshToken: Item.refreshToken.S,
+      accessToken: googleAccount.access_token,
+      refreshToken: googleAccount.refresh_token,
+      expires_at: googleAccount.expires_at || undefined
     };
   } catch (error) {
-    console.error("❌ Failed to fetch token from DynamoDB:", error);
+    console.error("❌ Failed to fetch token from Prisma:", error);
     return null;
   }
 }
 
+// Prismaでトークンを更新する関数
+// Prismaでアクセストークンのみを更新する関数
+async function updateTokenInPrisma(
+  email: string, 
+  accessToken: string,
+  expiresIn?: number
+): Promise<void> {
+  try {
+    // ユーザーのメールアドレスからユーザーを特定
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        accounts: {
+          where: { provider: 'google' }
+        }
+      }
+    });
+    
+    if (!user || user.accounts.length === 0) {
+      console.error("❌ Cannot update token - no Google account found for user:", email);
+      return;
+    }
+    
+    const googleAccount = user.accounts[0];
+    
+    // 現在のUNIX時間（秒）
+    const now = Math.floor(Date.now() / 1000);
+    
+    // アクセストークンと有効期限のみを更新
+    await prisma.account.update({
+      where: {
+        provider_providerAccountId: {
+          provider: 'google',
+          providerAccountId: googleAccount.providerAccountId
+        }
+      },
+      data: {
+        access_token: accessToken,
+        expires_at: expiresIn ? now + expiresIn : googleAccount.expires_at,
+        updatedAt: new Date()
+      }
+    });
+    
+    console.log("✅ Access token updated for user:", email);
+  } catch (error) {
+    console.error("❌ Failed to update access token in Prisma:", error);
+    throw error;
+  }
+}
+
 // Googleトークンをリフレッシュする関数
-async function refreshGoogleToken(refreshToken: string): Promise<{ access_token: string }> {
+async function refreshGoogleToken(refreshToken: string): Promise<{ 
+  access_token: string;
+  expires_in?: number;
+}> {
   if (!refreshToken) {
     throw new Error("Refresh token is required");
   }
@@ -202,6 +272,7 @@ async function refreshGoogleToken(refreshToken: string): Promise<{ access_token:
   }
   
   return {
-    access_token: data.access_token
+    access_token: data.access_token,
+    expires_in: data.expires_in
   };
 }

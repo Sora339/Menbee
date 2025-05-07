@@ -6,6 +6,7 @@ import { ArrowRight, Calendar, Clock, Share2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(true);
@@ -53,7 +54,7 @@ export default function Home() {
     },
     {
       title: "候補を共有",
-      description: "生成された候補リストをリンクで簡単に共有できます。",
+      description: "生成された候補リストをコピーして簡単に共有できます。",
     },
   ];
 
@@ -86,17 +87,20 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              Googleカレンダーの予定を避けた最適な面接日程の候補リストを自動生成します。就活生の面接調整をスムーズに。
+              あなたのGoogleカレンダーの予定を避けた最適な面接日程の候補リストを自動生成します。就活生の面接調整をスムーズに。
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start"
+              className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               <Link href="/login">
-                <Button size="lg" className="group">
+                <Button
+                  size="lg"
+                  className="group w-[200px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:shadow-lg"
+                >
                   今すぐ始める
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
@@ -105,23 +109,37 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 onClick={() => scrollToSection("how-it-works")}
+                className="w-[200px]"
               >
                 使い方を見る
               </Button>
             </motion.div>
           </div>
-
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="relative mx-auto max-w-md"
-          ></motion.div>
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Image
+              src="/image/top.png"
+              alt="google"
+              width={1000}
+              height={800}
+              className="rounded-lg shadow-lg"
+            />
+          </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="relative mx-auto max-w-md"
+        ></motion.div>
       </section>
 
       {/* 機能セクション */}
-      <section id="features" className="py-20 px-4 bg-muted/30">
+      <section id="features" className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             主な機能
@@ -155,12 +173,13 @@ export default function Home() {
       </section>
 
       {/* 使い方セクション */}
-      <section id="how-it-works" className="py-20 px-4">
+      <section id="how-it-works" className="py-20 px-4 text-white h-[450px]">
         <div className="container mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             使い方
           </h2>
 
+          <div className="top-6 h-[2px] border relative" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
               <motion.div
@@ -169,18 +188,14 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="relative"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white mb-4 z-30">
                     {index + 1}
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
                   <p className="text-muted-foreground">{step.description}</p>
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-6 left-[calc(100%_-_16px)] w-[calc(100%_-_32px)] h-[2px] bg-border" />
-                )}
               </motion.div>
             ))}
           </div>
@@ -188,7 +203,7 @@ export default function Home() {
       </section>
 
       {/* ユースケースセクション */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-muted/30 text-white">
         <div className="container mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             こんな方におすすめ
@@ -207,7 +222,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">就活中の学生</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted/70">
                   複数の企業との面接日程を調整する必要がある就活生。自分の空き時間を簡単に把握し、効率的に面接日程を提案できます。
                 </p>
               </div>
@@ -225,7 +240,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">採用担当者</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted/70">
                   多くの候補者と面接日程を調整する採用担当者。候補者から提案された日程をまとめて管理できます。
                 </p>
               </div>
@@ -245,7 +260,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2">
                   忙しいビジネスパーソン
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted/70">
                   スケジュールが詰まっているビジネスパーソン。空き時間を自動で見つけ出し、ミーティングの調整を効率化します。
                 </p>
               </div>
@@ -263,7 +278,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">フリーランス</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted/70">
                   複数のクライアントとのミーティングを調整するフリーランサー。効率的に空き時間を提案できます。
                 </p>
               </div>
@@ -304,10 +319,15 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <Button size="lg" className="group">
-              無料で試す
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <Link href="/login">
+              <Button
+                size="lg"
+                className="group w-[200px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:shadow-lg"
+              >
+                今すぐ始める
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>

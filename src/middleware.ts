@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '../auth';
 
 // ログイン不要なパス
-const publicPaths = ['/login', '/', '/terms', '/privacy'];
+const publicPaths = ['/login', '/', '/terms', '/privacy','/image'];
 
 export async function middleware(request: NextRequest) {
   // 現在のパスを取得
