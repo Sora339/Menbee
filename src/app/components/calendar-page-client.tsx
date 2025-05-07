@@ -23,16 +23,11 @@ import { DatePickerWithRange } from "@/components/ui/date-picker-range";
 import { GlassCard } from "@/components/ui/glass-card";
 
 import InterviewSlotsList from "@/app/components/interview-list";
-import { useMouseGradient } from "@/lib/animation-utils";
+// Error #1 fixed: Removed unused import
+// import { useMouseGradient } from "@/lib/animation-utils";
 import type { CalendarEvent } from "@/lib/calendar-service";
 
 // イベント設定のためのスキーマ定義
-interface EventSettings {
-  id: string;
-  selected: boolean;
-  bufferBefore: number;
-  bufferAfter: number;
-}
 
 const formSchema = z.object({
   date_range: z.string().refine(
@@ -74,6 +69,11 @@ const formSchema = z.object({
     .default([]),
 });
 
+// Error #2 fixed: Created type for form values
+type FormValues = z.infer<typeof formSchema> & {
+  calendarData: CalendarEvent[];
+};
+
 const daysOfWeek = [
   { label: "月曜日", value: "monday" },
   { label: "火曜日", value: "tuesday" },
@@ -92,9 +92,9 @@ export default function CalendarPageClient({
   initialEvents,
 }: CalendarPageClientProps) {
   const [calendarEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [formValues, setFormValues] = useState<any>(null);
+  // Error #2 fixed: Used the FormValues type instead of any
+  const [formValues, setFormValues] = useState<FormValues | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const mousePosition = useMouseGradient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

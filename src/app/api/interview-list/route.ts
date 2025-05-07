@@ -1,6 +1,6 @@
 // api/interview-slots/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { format, addMinutes, parseISO, isWithinInterval, getDay, startOfDay, endOfDay } from "date-fns";
+import { format, addMinutes, parseISO, getDay, startOfDay, endOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 
 // 曜日のマッピング (0=日曜, 1=月曜, ...)
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       if (event.start.date && event.end.date) {
         const startDate = parseISO(event.start.date);
         // 終日イベントの場合、終了日は通常次の日の0時を指すので、1日引く
-        const endDateRaw = parseISO(event.end.date);
+        // Error #1 修正: 変数を削除または使用
         
         // 今日の開始（0時0分）から終了（23時59分）までのイベントとして扱う
         excludedEvents.push({
@@ -131,8 +131,9 @@ export async function POST(req: NextRequest) {
         const endDateTime = parseISO(event.end.dateTime);
         
         // バッファー時間を適用
-        let startWithBuffer = addMinutes(startDateTime, -eventSetting.bufferBefore);
-        let endWithBuffer = addMinutes(endDateTime, eventSetting.bufferAfter);
+        // Error #2 & #3 修正: letをconstに変更
+        const startWithBuffer = addMinutes(startDateTime, -eventSetting.bufferBefore);
+        const endWithBuffer = addMinutes(endDateTime, eventSetting.bufferAfter);
         
         excludedEvents.push({
           id: event.id,
@@ -150,7 +151,8 @@ export async function POST(req: NextRequest) {
     const availableSlots: TimeSlot[] = [];
     
     // 開始日から終了日まで1日ずつ処理
-    let currentDate = new Date(startDate);
+    // Error #4 修正: この場合はエラーに誤りがあります。currentDateはループ内で再代入されるため、letのままにしておく必要があります
+    const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       // 曜日が選択されているか確認
       const dayOfWeek = getDay(currentDate);

@@ -2,7 +2,6 @@
 
 import { prisma } from "../../prisma";
 
-
 export interface CalendarEvent {
   id: string;
   summary: string;
@@ -10,8 +9,14 @@ export interface CalendarEvent {
   end: { dateTime?: string; date?: string };
 }
 
+interface GoogleCalendar {
+  id: string;
+  summary: string;
+  primary?: boolean;
+  selected?: boolean;
+}
+
 // カレンダーイベント取得関数
-// カレンダーイベント取得関数の一部を修正
 export async function getCalendarEvents(email: string): Promise<{
   events: CalendarEvent[];
   authError?: boolean;
@@ -27,7 +32,9 @@ export async function getCalendarEvents(email: string): Promise<{
       return { events: [], authError: true };
     }
     
-    let { accessToken, refreshToken, expires_at } = tokenData;
+    let { accessToken } = tokenData;
+    // Fixed: 'refreshToken' is never reassigned. Use 'const' instead
+    const { refreshToken } = tokenData;
     
     try {
       // カレンダー一覧を取得
@@ -104,7 +111,11 @@ export async function getCalendarEvents(email: string): Promise<{
 }
 
 // カレンダーの一覧から予定を取得する関数
-async function fetchEventsFromCalendars(calendars: any[], accessToken: string): Promise<CalendarEvent[]> {
+// Fixed: 'Unexpected any. Specify a different type'
+async function fetchEventsFromCalendars(
+  calendars: GoogleCalendar[], 
+  accessToken: string
+): Promise<CalendarEvent[]> {
   // 3ヶ月間の予定を取得
   const now = new Date();
   const threeMonthsLater = new Date();
@@ -114,7 +125,7 @@ async function fetchEventsFromCalendars(calendars: any[], accessToken: string): 
   const timeMax = threeMonthsLater.toISOString();
 
   const allEvents: CalendarEvent[] = [];
-  const calendarIds = calendars.map((cal: any) => cal.id);
+  const calendarIds = calendars.map((cal: GoogleCalendar) => cal.id);
 
   console.log("📅 Found calendars:", calendarIds.length);
 

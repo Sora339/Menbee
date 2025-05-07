@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { GlassCard } from "@/components/ui/glass-card"
+import { useEffect, useState, useCallback } from "react";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
   DialogContent,
@@ -9,16 +9,37 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Copy, Check } from "lucide-react"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
 
 interface InterviewSlot {
-  date: string
-  dayOfWeek: string
-  startTime: string
-  endTime: string
-  formatted: string
+  date: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  formatted: string;
+}
+
+// Fix #1: Created a properly typed interface for formData
+interface FormData {
+  date_range: string;
+  days: string[];
+  start_time: string;
+  end_time: string;
+  minimum_duration?: number;
+  events: Array<{
+    id: string;
+    selected: boolean;
+    bufferBefore: number;
+    bufferAfter: number;
+  }>;
+  calendarData: Array<{
+    id: string;
+    summary: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+  }>;
 }
 
 export default function InterviewSlotsList({
@@ -26,19 +47,19 @@ export default function InterviewSlotsList({
   isOpen,
   onClose,
 }: {
-  formData: any
-  isOpen: boolean
-  onClose: () => void
+  formData: FormData;
+  isOpen: boolean;
+  onClose: () => void;
 }) {
-  const [slots, setSlots] = useState<InterviewSlot[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isCopied, setIsCopied] = useState(false)
-  const [copyMessage, setCopyMessage] = useState<string | null>(null)
+  const [slots, setSlots] = useState<InterviewSlot[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
-  const fetchInterviewSlots = async () => {
-    setLoading(true)
-    setError(null)
+  // Fix #3: Wrap fetchInterviewSlots in useCallback to use in dependency array
+  const fetchInterviewSlots = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch("/api/interview-list", {
@@ -47,67 +68,68 @@ export default function InterviewSlotsList({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "面接候補時間の取得に失敗しました")
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "面接候補時間の取得に失敗しました"
+        );
       }
 
-      const data = await response.json()
-      setSlots(data.slots || [])
+      const data = await response.json();
+      setSlots(data.slots || []);
     } catch (err) {
-      console.error("面接候補時間の取得エラー:", err)
-      setError((err as Error).message || "面接候補時間の計算に失敗しました")
+      console.error("面接候補時間の取得エラー:", err);
+      setError((err as Error).message || "面接候補時間の計算に失敗しました");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [formData]);
 
   useEffect(() => {
     if (formData && isOpen) {
-      console.log("InterviewSlotsList - 受信データ:", formData)
+      console.log("InterviewSlotsList - 受信データ:", formData);
       if (!formData.calendarData || formData.calendarData.length === 0) {
-        setError("カレンダーイベントデータが存在しません。予定情報を取得してください。")
-        setLoading(false)
-        return
+        setError(
+          "カレンダーイベントデータが存在しません。予定情報を取得してください。"
+        );
+        setLoading(false);
+        return;
       }
-      fetchInterviewSlots()
+      fetchInterviewSlots();
     }
-  }, [formData, isOpen])
+  }, [formData, isOpen, fetchInterviewSlots]);
 
   // リストをコピーする関数
   const copyToClipboard = async () => {
-    if (slots.length === 0) return
+    if (slots.length === 0) return;
 
     try {
-      const textToCopy = slots.map((slot) => `・${slot.formatted}`).join("\n")
-      await navigator.clipboard.writeText(textToCopy)
+      const textToCopy = slots.map((slot) => `・${slot.formatted}`).join("\n");
+      await navigator.clipboard.writeText(textToCopy);
 
-      setIsCopied(true)
-      setCopyMessage("面接候補時間リストがクリップボードにコピーされました")
+      setIsCopied(true);
 
       // 3秒後にコピー状態をリセット
       setTimeout(() => {
-        setIsCopied(false)
-        setCopyMessage(null)
-      }, 3000)
+        setIsCopied(false);
+      }, 3000);
     } catch (err) {
-      console.error("クリップボードへのコピーに失敗しました:", err)
-      setCopyMessage("クリップボードへのコピーに失敗しました")
-
-      // 3秒後にメッセージをクリア
-      setTimeout(() => {
-        setCopyMessage(null)
-      }, 3000)
+      console.error("クリップボードへのコピーに失敗しました:", err);
     }
-  }
+  };
 
   const renderContent = () => {
-    if (loading) return <div className="text-center py-8">読み込み中...</div>
-    if (error) return <div className="text-red-600 text-center py-8">{error}</div>
+    if (loading) return <div className="text-center py-8">読み込み中...</div>;
+    if (error)
+      return <div className="text-red-600 text-center py-8">{error}</div>;
     if (slots.length === 0)
-      return <div className="text-center py-8">条件に合う面接候補時間はありません。条件を変更してください。</div>
+      return (
+        <div className="text-center py-8">
+          条件に合う面接候補時間はありません。条件を変更してください。
+        </div>
+      );
 
     return (
       <GlassCard className="h-[400px] w-full p-4 overflow-y-scroll custom-scrollbar">
@@ -117,20 +139,20 @@ export default function InterviewSlotsList({
           </div>
         ))}
       </GlassCard>
-    )
-  }
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="sm:max-w-md bg-black/40 backdrop-blur-xl border border-white/20 text-white [&>button:last-child]:hidden"
-      >
+      <DialogContent className="sm:max-w-md bg-black/40 backdrop-blur-xl border border-white/20 text-white [&>button:last-child]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between">
           <div>
             <DialogTitle className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-fuchsia-600">
               面接候補時間一覧
             </DialogTitle>
-            <DialogDescription className="text-gray-300">以下の時間帯が面接可能な候補時間です</DialogDescription>
+            <DialogDescription className="text-gray-300">
+              以下の時間帯が面接可能な候補時間です
+            </DialogDescription>
           </div>
 
           {slots.length > 0 && (
@@ -141,7 +163,11 @@ export default function InterviewSlotsList({
               onClick={copyToClipboard}
               title="リストをコピー"
             >
-              {isCopied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4 text-violet-300" />}
+              {isCopied ? (
+                <Check className="h-4 w-4 text-green-400" />
+              ) : (
+                <Copy className="h-4 w-4 text-violet-300" />
+              )}
               <span className="sr-only">リストをコピー</span>
             </Button>
           )}
@@ -150,11 +176,14 @@ export default function InterviewSlotsList({
         {renderContent()}
 
         <DialogFooter className="flex justify-end sm:justify-end">
-          <Button onClick={onClose} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90">
+          <Button
+            onClick={onClose}
+            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90"
+          >
             閉じる
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

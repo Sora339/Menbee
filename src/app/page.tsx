@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, Clock, Share2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,11 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default function Home() {
-  const [isLoaded, setIsLoaded] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
