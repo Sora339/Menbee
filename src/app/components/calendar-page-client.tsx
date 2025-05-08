@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { format, parseISO, isWithinInterval } from "date-fns";
+import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -155,15 +155,17 @@ export default function CalendarPageClient({
     },
   });
 
+  const { getValues, setValue, control } = form;
+
   // date_rangeの値が変わるたびにイベントをフィルタリングする
   const dateRangeValue = useWatch({
-    control: form.control,
+    control: control,
     name: "date_range",
   });
 
   // CalendarPageClient の内部
   const selectedDays = useWatch({
-    control: form.control,
+    control: control,
     name: "days",
   });
   
@@ -191,7 +193,7 @@ export default function CalendarPageClient({
   
     setFilteredEvents(sorted);
   
-    const currentEvents = form.getValues("events");
+    const currentEvents = getValues("events");
     const updatedEvents = sorted.map((event) => {
       const existing = currentEvents.find((e) => e.id === event.id);
       return {
@@ -203,9 +205,9 @@ export default function CalendarPageClient({
     });
   
     if (JSON.stringify(currentEvents) !== JSON.stringify(updatedEvents)) {
-      form.setValue("events", updatedEvents);
+      setValue("events", updatedEvents);
     }
-  }, [dateRangeValue, selectedDays, calendarEvents]);
+  }, [dateRangeValue, selectedDays, calendarEvents, getValues, setValue]);
   
 
   function onSubmit(values: z.infer<typeof formSchema>) {
