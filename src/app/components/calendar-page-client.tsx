@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { format } from "date-fns";
-import { useState } from "react";
+import { format, parseISO, isWithinInterval } from "date-fns";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -23,12 +23,9 @@ import { DatePickerWithRange } from "@/components/ui/date-picker-range";
 import { GlassCard } from "@/components/ui/glass-card";
 
 import InterviewSlotsList from "@/app/components/interview-list";
-// Error #1 fixed: Removed unused import
-// import { useMouseGradient } from "@/lib/animation-utils";
 import type { CalendarEvent } from "@/lib/calendar-service";
 
 // イベント設定のためのスキーマ定義
-
 const formSchema = z.object({
   date_range: z.string().refine(
     (val) => {
@@ -69,7 +66,6 @@ const formSchema = z.object({
     .default([]),
 });
 
-// Error #2 fixed: Created type for form values
 type FormValues = z.infer<typeof formSchema> & {
   calendarData: CalendarEvent[];
 };
@@ -92,15 +88,61 @@ export default function CalendarPageClient({
   initialEvents,
 }: CalendarPageClientProps) {
   const [calendarEvents] = useState<CalendarEvent[]>(initialEvents);
-  // Error #2 fixed: Used the FormValues type instead of any
+  const [filteredEvents, setFilteredEvents] =
+    useState<CalendarEvent[]>(initialEvents);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+
+  // イベントをソートして日付範囲でフィルターする関数
+  const sortAndFilterEvents = (
+    events: CalendarEvent[],
+    range: { from?: Date; to?: Date },
+    validDays: string[]
+  ): CalendarEvent[] => {
+    const sortedEvents = [...events].sort((a, b) => {
+      const dateA = a.start.dateTime
+        ? new Date(a.start.dateTime)
+        : a.start.date
+        ? new Date(a.start.date)
+        : new Date(0);
+      const dateB = b.start.dateTime
+        ? new Date(b.start.dateTime)
+        : b.start.date
+        ? new Date(b.start.date)
+        : new Date(0);
+      return dateA.getTime() - dateB.getTime();
+    });
+  
+    return sortedEvents.filter((event) => {
+      const eventStart = event.start.dateTime
+        ? new Date(event.start.dateTime)
+        : event.start.date
+        ? new Date(event.start.date)
+        : null;
+      if (!eventStart) return false;
+  
+      // 範囲の判定
+      if (range.from && eventStart < range.from) return false;
+      if (range.to) {
+        const endDate = new Date(range.to);
+        endDate.setHours(23, 59, 59, 999);
+        if (eventStart > endDate) return false;
+      }
+  
+      // 曜日でフィルタリング
+      const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const day = dayNames[eventStart.getDay()];
+      return validDays.includes(day);
+    });
+  };
+  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date_range: "",
-      days: [],
+      days: daysOfWeek.map((day) => day.value),
       start_time: "",
       end_time: "",
       minimum_duration: 30,
@@ -113,12 +155,65 @@ export default function CalendarPageClient({
     },
   });
 
+  // date_rangeの値が変わるたびにイベントをフィルタリングする
+  const dateRangeValue = useWatch({
+    control: form.control,
+    name: "date_range",
+  });
+
+  // CalendarPageClient の内部
+  const selectedDays = useWatch({
+    control: form.control,
+    name: "days",
+  });
+  
+  useEffect(() => {
+    const validDays = selectedDays ?? [];
+  
+    let sorted: CalendarEvent[];
+    if (dateRangeValue) {
+      try {
+        const { from: rawFrom, to: rawTo } = JSON.parse(dateRangeValue);
+        const range = {
+          from: rawFrom ? new Date(rawFrom) : undefined,
+          to: rawTo ? new Date(rawTo) : undefined,
+        };
+        setDateRange(range);
+        sorted = sortAndFilterEvents(calendarEvents, range, validDays);
+      } catch {
+        setDateRange({});
+        sorted = sortAndFilterEvents(calendarEvents, {}, validDays);
+      }
+    } else {
+      setDateRange({});
+      sorted = sortAndFilterEvents(calendarEvents, {}, validDays);
+    }
+  
+    setFilteredEvents(sorted);
+  
+    const currentEvents = form.getValues("events");
+    const updatedEvents = sorted.map((event) => {
+      const existing = currentEvents.find((e) => e.id === event.id);
+      return {
+        id: event.id,
+        selected: existing?.selected ?? true,
+        bufferBefore: existing?.bufferBefore ?? 0,
+        bufferAfter: existing?.bufferAfter ?? 0,
+      };
+    });
+  
+    if (JSON.stringify(currentEvents) !== JSON.stringify(updatedEvents)) {
+      form.setValue("events", updatedEvents);
+    }
+  }, [dateRangeValue, selectedDays, calendarEvents]);
+  
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("フォーム送信:", values);
     // カレンダーイベントデータを含める
     const formDataWithCalendar = {
       ...values,
-      calendarData: calendarEvents,
+      calendarData: filteredEvents,
     };
     console.log("送信するデータ:", formDataWithCalendar);
     setFormValues(formDataWithCalendar);
@@ -162,10 +257,10 @@ export default function CalendarPageClient({
                 </div>
                 <GlassCard className="h-[600px] p-4 overflow-y-scroll custom-scrollbar">
                   <ul className="space-y-4 pr-2">
-                    {calendarEvents.length > 0 ? (
-                      calendarEvents.map((event, index) => (
+                    {filteredEvents.length > 0 ? (
+                      filteredEvents.map((event, index) => (
                         <motion.li
-                          key={event.id}
+                          key={`${index}-${event.id}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{
@@ -244,6 +339,7 @@ export default function CalendarPageClient({
                                                 className="w-20 bg-white/30 backdrop-blur-sm border-indigo-200"
                                                 value={field.value}
                                                 step={15}
+                                                min={0}
                                                 onChange={(e) =>
                                                   field.onChange(
                                                     Number.parseInt(
@@ -274,6 +370,7 @@ export default function CalendarPageClient({
                                                 className="w-20 bg-white/30 backdrop-blur-sm border-indigo-200"
                                                 value={field.value}
                                                 step={15}
+                                                min={0}
                                                 onChange={(e) =>
                                                   field.onChange(
                                                     Number.parseInt(
@@ -295,7 +392,11 @@ export default function CalendarPageClient({
                         </motion.li>
                       ))
                     ) : (
-                      <p className="text-center p-4">予定はありません。</p>
+                      <p className="text-center p-4">
+                        {dateRange.from
+                          ? "選択した期間内に予定はありません。"
+                          : "予定はありません。"}
+                      </p>
                     )}
                   </ul>
                 </GlassCard>
