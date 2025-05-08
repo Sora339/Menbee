@@ -126,8 +126,8 @@ export async function POST(req: NextRequest) {
       // 時間指定イベントの処理
       else if (event.start.dateTime && event.end.dateTime) {
         // startDateTimeとendDateTimeをパースする際に、タイムゾーンが指定されていることを確認
-        let startDateTime = parseISO(event.start.dateTime);
-        let endDateTime = parseISO(event.end.dateTime);
+        const startDateTime = parseISO(event.start.dateTime);
+        const endDateTime = parseISO(event.end.dateTime);
         
         // バッファー時間を適用
         const startWithBuffer = addMinutes(startDateTime, -eventSetting.bufferBefore);
