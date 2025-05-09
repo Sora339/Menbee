@@ -508,7 +508,7 @@ export default function CalendarPageClient({
                             <Input
                               {...field}
                               type="time"
-                              className="bg-white/30 backdrop-blur-sm border-indigo-200 w-[80%]"
+                              className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24"
                             />
                           </FormControl>
                           <FormMessage />
@@ -531,7 +531,7 @@ export default function CalendarPageClient({
                             <Input
                               {...field}
                               type="time"
-                              className="bg-white/30 backdrop-blur-sm border-indigo-200 w-[80%]"
+                              className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24"
                             />
                           </FormControl>
                           <FormMessage />
@@ -556,7 +556,7 @@ export default function CalendarPageClient({
                             onChange={(val: number) => field.onChange(val)}
                             step={15}
                             min={0}
-                            className="justify-start w-20 bg-white/30"
+                            className="justify-start"
                           />
                         </FormControl>
                         <FormMessage />

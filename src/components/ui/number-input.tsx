@@ -72,10 +72,9 @@ export function NumberInput({
   if (!isMobile) {
     return (
       <div className={`flex items-center ${className}`}>
-
           <Input
             type="number"
-            className={`bg-white w-20 ${className}`}
+            className={`bg-white/50 w-20`}
             value={value.toString()}
             step={step}
             min={min}
