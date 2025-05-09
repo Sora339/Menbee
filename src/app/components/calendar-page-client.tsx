@@ -24,6 +24,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 
 import InterviewSlotsList from "@/app/components/interview-list";
 import type { CalendarEvent } from "@/lib/calendar-service";
+import { NumberInput } from "@/components/ui/number-input";
 
 // イベント設定のためのスキーマ定義
 const formSchema = z.object({
@@ -113,7 +114,7 @@ export default function CalendarPageClient({
         : new Date(0);
       return dateA.getTime() - dateB.getTime();
     });
-  
+
     return sortedEvents.filter((event) => {
       const eventStart = event.start.dateTime
         ? new Date(event.start.dateTime)
@@ -121,7 +122,7 @@ export default function CalendarPageClient({
         ? new Date(event.start.date)
         : null;
       if (!eventStart) return false;
-  
+
       // 範囲の判定
       if (range.from && eventStart < range.from) return false;
       if (range.to) {
@@ -129,14 +130,21 @@ export default function CalendarPageClient({
         endDate.setHours(23, 59, 59, 999);
         if (eventStart > endDate) return false;
       }
-  
+
       // 曜日でフィルタリング
-      const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
       const day = dayNames[eventStart.getDay()];
       return validDays.includes(day);
     });
   };
-  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -168,10 +176,10 @@ export default function CalendarPageClient({
     control: control,
     name: "days",
   });
-  
+
   useEffect(() => {
     const validDays = selectedDays ?? [];
-  
+
     let sorted: CalendarEvent[];
     if (dateRangeValue) {
       try {
@@ -190,9 +198,9 @@ export default function CalendarPageClient({
       setDateRange({});
       sorted = sortAndFilterEvents(calendarEvents, {}, validDays);
     }
-  
+
     setFilteredEvents(sorted);
-  
+
     const currentEvents = getValues("events");
     const updatedEvents = sorted.map((event) => {
       const existing = currentEvents.find((e) => e.id === event.id);
@@ -203,12 +211,11 @@ export default function CalendarPageClient({
         bufferAfter: existing?.bufferAfter ?? 0,
       };
     });
-  
+
     if (JSON.stringify(currentEvents) !== JSON.stringify(updatedEvents)) {
       setValue("events", updatedEvents);
     }
   }, [dateRangeValue, selectedDays, calendarEvents, getValues, setValue]);
-  
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("フォーム送信:", values);
@@ -290,11 +297,11 @@ export default function CalendarPageClient({
                               />
 
                               <div className="flex flex-col sm:flex-row w-full justify-between sm:items-center">
-                                <div>
+                                <div className="w-[80%]">
                                   <h3 className="text-lg font-semibold text-left">
                                     {event.summary}
                                   </h3>
-                                  <p className="text-gray-600 dark:text-gray-300">
+                                  <p className="text-gray-600 dark:text-gray-300 w-fit">
                                     開始:{" "}
                                     {event.start.dateTime
                                       ? format(
@@ -308,7 +315,7 @@ export default function CalendarPageClient({
                                         )
                                       : "日付未定"}
                                   </p>
-                                  <p className="text-gray-600 dark:text-gray-300">
+                                  <p className="text-gray-600 dark:text-gray-300 w-fit">
                                     終了:{" "}
                                     {event.end.dateTime
                                       ? format(
@@ -323,34 +330,30 @@ export default function CalendarPageClient({
                                       : "日付未定"}
                                   </p>
                                 </div>
-                                <div className="flex sm:flex-col gap-2 mt-2 md:mt-0 ml-auto text-right">
+                                <div className="flex sm:flex-col gap-2 sm:w-[30%] md:w-[270px] xl:w-[260px] mt-2 md:mt-0 ml-auto text-right">
                                   {/* 時間指定のある予定のみ余裕時間を表示 */}
                                   {event.start.dateTime && (
                                     <FormField
                                       control={form.control}
                                       name={`events.${index}.bufferBefore`}
                                       render={({ field }) => (
-                                        <FormItem>
-                                          <div className="sm:flex items-center gap-2">
-                                            <label className="text-sm text-gray-600 dark:text-gray-300">
+                                        <FormItem className="">
+                                          <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row justify-end md:items-center lg:items-end xl:items-center gap-1">
+                                            <label className="text-sm text-gray-600 dark:text-gray-300 text-right">
                                               前の余裕(分):
                                             </label>
                                             <FormControl>
-                                              <Input
-                                                type="number"
-                                                className="w-20 bg-white/30 backdrop-blur-sm border-indigo-200"
+                                              <NumberInput
                                                 value={field.value}
+                                                onChange={(val: number) =>
+                                                  field.onChange(val)
+                                                }
                                                 step={15}
                                                 min={0}
-                                                onChange={(e) =>
-                                                  field.onChange(
-                                                    Number.parseInt(
-                                                      e.target.value
-                                                    ) || 0
-                                                  )
-                                                }
+                                                className="flex justify-end"
                                               />
                                             </FormControl>
+
                                           </div>
                                         </FormItem>
                                       )}
@@ -361,28 +364,24 @@ export default function CalendarPageClient({
                                       control={form.control}
                                       name={`events.${index}.bufferAfter`}
                                       render={({ field }) => (
-                                        <FormItem>
-                                          <div className="sm:flex items-center gap-2">
-                                            <label className="text-sm text-gray-600 dark:text-gray-300">
+                                        <FormItem className="">
+                                          <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row justify-end md:items-center lg:items-end xl:items-center gap-1">                                         
+                                            <label className="text-sm text-gray-600 dark:text-gray-300 text-right">
                                               後の余裕(分):
                                             </label>
                                             <FormControl>
-                                              <Input
-                                                type="number"
-                                                className="w-20 bg-white/30 backdrop-blur-sm border-indigo-200"
+                                              <NumberInput
                                                 value={field.value}
+                                                onChange={(val: number) =>
+                                                  field.onChange(val)
+                                                }
                                                 step={15}
                                                 min={0}
-                                                onChange={(e) =>
-                                                  field.onChange(
-                                                    Number.parseInt(
-                                                      e.target.value
-                                                    ) || 0
-                                                  )
-                                                }
+                                                className="flex justify-end" 
                                               />
                                             </FormControl>
-                                          </div>
+                                            </div>
+                                          
                                         </FormItem>
                                       )}
                                     />
@@ -552,14 +551,12 @@ export default function CalendarPageClient({
                           面接に必要な時間を設定してください。これより短い時間枠は除外されます。
                         </FormDescription>
                         <FormControl>
-                          <Input
-                            type="number"
+                          <NumberInput
+                            value={field.value}
+                            onChange={(val: number) => field.onChange(val)}
                             step={15}
-                            onChange={(e) =>
-                              field.onChange(Number.parseInt(e.target.value))
-                            }
-                            value={field.value.toString() || "30"}
-                            className="bg-white/30 backdrop-blur-sm border-indigo-200 w-[30%] sm:w-[20%]"
+                            min={0}
+                            className="justify-start w-20 bg-white/30"
                           />
                         </FormControl>
                         <FormMessage />
