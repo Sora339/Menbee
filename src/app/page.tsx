@@ -82,7 +82,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              面接日程調整を<span className="text-primary">シンプル</span>に
+              <p className="leading-[120%]">面接日程調整を<br className=""/><span className="text-primary">シンプル</span>に</p>
             </motion.h1>
 
             <motion.p
@@ -177,13 +177,13 @@ export default function Home() {
       </section>
 
       {/* 使い方セクション */}
-      <section id="how-it-works" className="py-20 px-4 text-white h-[450px]">
+      <section id="how-it-works" className="py-20 px-4 text-white ">
         <div className="container mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             使い方
           </h2>
 
-          <div className="top-6 h-[2px] border relative" />
+          <div className="top-6 h-[2px] border relative hidden lg:block" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
               <motion.div
