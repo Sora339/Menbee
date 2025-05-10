@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "Menbee",
     url: "https://menbee.vercel.app/",
     images: {
-      url: "https://menbee.vercel.app/image/ogp.webo",
+      url: "https://menbee.vercel.app/image/ogp.webp",
       type: "image/webp",
       width: 640,
       height: 360,
