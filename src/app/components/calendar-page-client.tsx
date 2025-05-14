@@ -230,7 +230,7 @@ export default function CalendarPageClient({
   }
 
   return (
-    <div className="mx-auto relative mt-6 lg:mt-12">
+    <div className="mx-auto relative mt-6 lg:mt-8">
       <div className="p-6 container mx-auto">
         {/* モーダルコンポーネント */}
         {formValues && (
@@ -249,7 +249,7 @@ export default function CalendarPageClient({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 h-fit">
+            <div className="flex lg:grid lg:grid-cols-2 gap-12 h-fit flex-col-reverse">
               {/* 左側：カレンダーイベント */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
