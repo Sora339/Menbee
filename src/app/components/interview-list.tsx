@@ -144,13 +144,13 @@ export default function InterviewSlotsList({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-black/40 backdrop-blur-xl border border-white/20 text-white [&>button:last-child]:hidden">
+      <DialogContent className="max-w-sm sm:max-w-md bg-black/40 rounded-lg backdrop-blur-xl border border-white/20 text-white [&>button:last-child]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between">
           <div>
-            <DialogTitle className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-fuchsia-600">
+            <DialogTitle className="text-2xl text-left font-bold mb-2 bg-clip-text text-white">
               面接候補時間一覧
             </DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogDescription className="text-white/80">
               以下の時間帯が面接可能な候補時間です
             </DialogDescription>
           </div>
@@ -175,13 +175,15 @@ export default function InterviewSlotsList({
 
         {renderContent()}
 
-        <DialogFooter className="flex justify-end sm:justify-end">
-          <Button
-            onClick={onClose}
-            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90"
-          >
-            閉じる
-          </Button>
+        <DialogFooter className="!justify-center">
+          <div className="flex justify-center">
+            <Button
+              onClick={onClose}
+              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 w-fit"
+            >
+              閉じる
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

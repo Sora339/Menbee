@@ -256,11 +256,11 @@ export default function CalendarPageClient({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <h2 className="text-2xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                <h2 className="text-2xl font-bold mb-1 text-white">
                   あなたの予定
                 </h2>
                 <div className="mb-4">
-                  <span className="text-white font-sans">
+                  <span className="text-white/80 font-sans">
                     すでに入っている予定に関する設定です
                   </span>
                 </div>
@@ -409,11 +409,11 @@ export default function CalendarPageClient({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <h2 className="text-2xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                <h2 className="text-2xl font-bold mb-1 bg-clip-text text-white">
                   面接可能時間設定
                 </h2>
                 <div className="mb-4">
-                  <span className="text-white font-sans">
+                  <span className="text-white/80 font-sans">
                     面接の日程に関する条件の設定です
                   </span>
                 </div>
@@ -571,11 +571,11 @@ export default function CalendarPageClient({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="flex justify-end"
+              className="flex justify-center sm:justify-end"
             >
               <Button
                 type="submit"
-                className="px-8 py-6 text-lg bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:shadow-lg hover:shadow-indigo-600/20 transition-all duration-300"
+                className="px-8 py-6 text-lg bg-gradient-to-r font-bold from-indigo-600 via-purple-600 to-pink-600 hover:shadow-lg hover:shadow-indigo-600/20 transition-all duration-300"
               >
                 面接候補リストを作成
               </Button>
