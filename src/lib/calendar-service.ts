@@ -111,7 +111,6 @@ export async function getCalendarEvents(email: string): Promise<{
 }
 
 // カレンダーの一覧から予定を取得する関数
-// Fixed: 'Unexpected any. Specify a different type'
 async function fetchEventsFromCalendars(
   calendars: GoogleCalendar[], 
   accessToken: string
@@ -195,7 +194,6 @@ async function getTokenFromPrisma(email: string): Promise<{
 }
 
 // Prismaでトークンを更新する関数
-// Prismaでアクセストークンのみを更新する関数
 async function updateTokenInPrisma(
   email: string, 
   accessToken: string,

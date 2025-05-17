@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
@@ -12,94 +12,22 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
-
-interface InterviewSlot {
-  date: string;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  formatted: string;
-}
-
-// Fix #1: Created a properly typed interface for formData
-interface FormData {
-  date_range: string;
-  days: string[];
-  start_time: string;
-  end_time: string;
-  minimum_duration?: number;
-  events: Array<{
-    id: string;
-    selected: boolean;
-    bufferBefore: number;
-    bufferAfter: number;
-  }>;
-  calendarData: Array<{
-    id: string;
-    summary: string;
-    start: { dateTime?: string; date?: string };
-    end: { dateTime?: string; date?: string };
-  }>;
-}
+import { InterviewSlot } from "../../../type";
 
 export default function InterviewSlotsList({
-  formData,
+  slots,
+  isLoading,
+  error,
   isOpen,
   onClose,
 }: {
-  formData: FormData;
+  slots: InterviewSlot[];
+  isLoading: boolean;
+  error: string | null;
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [slots, setSlots] = useState<InterviewSlot[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
-
-  // Fix #3: Wrap fetchInterviewSlots in useCallback to use in dependency array
-  const fetchInterviewSlots = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/interview-list", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "面接候補時間の取得に失敗しました"
-        );
-      }
-
-      const data = await response.json();
-      setSlots(data.slots || []);
-    } catch (err) {
-      console.error("面接候補時間の取得エラー:", err);
-      setError((err as Error).message || "面接候補時間の計算に失敗しました");
-    } finally {
-      setLoading(false);
-    }
-  }, [formData]);
-
-  useEffect(() => {
-    if (formData && isOpen) {
-      console.log("InterviewSlotsList - 受信データ:", formData);
-      if (!formData.calendarData || formData.calendarData.length === 0) {
-        setError(
-          "カレンダーイベントデータが存在しません。予定情報を取得してください。"
-        );
-        setLoading(false);
-        return;
-      }
-      fetchInterviewSlots();
-    }
-  }, [formData, isOpen, fetchInterviewSlots]);
 
   // リストをコピーする関数
   const copyToClipboard = async () => {
@@ -121,7 +49,7 @@ export default function InterviewSlotsList({
   };
 
   const renderContent = () => {
-    if (loading) return <div className="text-center py-8">読み込み中...</div>;
+    if (isLoading) return <div className="text-center py-8">読み込み中...</div>;
     if (error)
       return <div className="text-red-600 text-center py-8">{error}</div>;
     if (slots.length === 0)
@@ -141,6 +69,7 @@ export default function InterviewSlotsList({
       </GlassCard>
     );
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

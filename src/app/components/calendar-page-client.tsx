@@ -25,6 +25,8 @@ import { GlassCard } from "@/components/ui/glass-card";
 import InterviewSlotsList from "@/app/components/interview-list";
 import type { CalendarEvent } from "@/lib/calendar-service";
 import { NumberInput } from "@/components/ui/number-input";
+import { InterviewSlot } from "../../../type";
+import { getInterviewSlots } from "../actions/interviewList";
 
 // イベント設定のためのスキーマ定義
 const formSchema = z.object({
@@ -93,6 +95,9 @@ export default function CalendarPageClient({
     useState<CalendarEvent[]>(initialEvents);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [interviewSlots, setInterviewSlots] = useState<InterviewSlot[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
 
   // イベントをソートして日付範囲でフィルターする関数
@@ -217,16 +222,34 @@ export default function CalendarPageClient({
     }
   }, [dateRangeValue, selectedDays, calendarEvents, getValues, setValue]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("フォーム送信:", values);
-    // カレンダーイベントデータを含める
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // フォームデータを整形
     const formDataWithCalendar = {
       ...values,
       calendarData: filteredEvents,
     };
-    console.log("送信するデータ:", formDataWithCalendar);
+
     setFormValues(formDataWithCalendar);
-    setIsModalOpen(true);
+    setIsLoading(true);
+    setActionError(null);
+
+    try {
+      // Server Actionを直接呼び出し
+      const result = await getInterviewSlots(formDataWithCalendar);
+
+      if (result.success && result.slots) {
+        setInterviewSlots(result.slots);
+        setIsModalOpen(true);
+      } else {
+        setActionError(result.message || "面接可能時間の取得に失敗しました");
+        console.error("Error details:", result.error);
+      }
+    } catch (error) {
+      setActionError("処理中にエラーが発生しました");
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -235,7 +258,9 @@ export default function CalendarPageClient({
         {/* モーダルコンポーネント */}
         {formValues && (
           <InterviewSlotsList
-            formData={formValues}
+            slots={interviewSlots}
+            isLoading={isLoading}
+            error={actionError}
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
           />
@@ -353,7 +378,6 @@ export default function CalendarPageClient({
                                                 className="flex justify-end"
                                               />
                                             </FormControl>
-
                                           </div>
                                         </FormItem>
                                       )}
@@ -365,7 +389,7 @@ export default function CalendarPageClient({
                                       name={`events.${index}.bufferAfter`}
                                       render={({ field }) => (
                                         <FormItem className="">
-                                          <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row justify-end md:items-center lg:items-end xl:items-center gap-1">                                         
+                                          <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row justify-end md:items-center lg:items-end xl:items-center gap-1">
                                             <label className="text-sm text-gray-600 dark:text-gray-300 text-right">
                                               後の余裕(分):
                                             </label>
@@ -377,11 +401,10 @@ export default function CalendarPageClient({
                                                 }
                                                 step={15}
                                                 min={0}
-                                                className="flex justify-end" 
+                                                className="flex justify-end"
                                               />
                                             </FormControl>
-                                            </div>
-                                          
+                                          </div>
                                         </FormItem>
                                       )}
                                     />
