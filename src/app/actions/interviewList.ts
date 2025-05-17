@@ -10,6 +10,7 @@ import {
 import { ja } from "date-fns/locale";
 import { toZonedTime, format as tzFormat } from "date-fns-tz";
 import { z } from "zod";
+import { EventWithBuffer, TimeSlot } from "../../../type";
 
 const TIMEZONE = "Asia/Tokyo";
 
@@ -75,27 +76,9 @@ const formDataSchema = z.object({
   calendarData: z.array(calendarEventSchema),
 });
 
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: { dateTime?: string; date?: string };
-  end:   { dateTime?: string; date?: string };
-}
-
-interface EventWithBuffer {
-  id: string;
-  summary: string;
-  start: Date;
-  end:   Date;
-  isAllDay: boolean;
-}
 
 type FormData = z.infer<typeof formDataSchema>;
 
-interface TimeSlot {
-  start: Date;
-  end:   Date;
-}
 
 export async function getInterviewSlots(formData: FormData) {
   try {

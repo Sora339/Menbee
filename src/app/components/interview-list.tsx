@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { GlassCard } from "@/components/ui/glass-card";
+import { useState } from 'react';
+import { GlassCard } from '@/components/ui/glass-card';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +9,19 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
-import { InterviewSlot } from "../../../type";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Copy, Check } from 'lucide-react';
+import { InterviewSlot } from '../../../type';
+
+
+interface InterviewSlotsListProps {
+  slots: InterviewSlot[];
+  isLoading: boolean;
+  error: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 export default function InterviewSlotsList({
   slots,
@@ -20,13 +29,7 @@ export default function InterviewSlotsList({
   error,
   isOpen,
   onClose,
-}: {
-  slots: InterviewSlot[];
-  isLoading: boolean;
-  error: string | null;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
+}: InterviewSlotsListProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   // リストをコピーする関数
@@ -34,7 +37,7 @@ export default function InterviewSlotsList({
     if (slots.length === 0) return;
 
     try {
-      const textToCopy = slots.map((slot) => `・${slot.formatted}`).join("\n");
+      const textToCopy = slots.map((slot) => `・${slot.formatted}`).join('\n');
       await navigator.clipboard.writeText(textToCopy);
 
       setIsCopied(true);
@@ -44,7 +47,7 @@ export default function InterviewSlotsList({
         setIsCopied(false);
       }, 3000);
     } catch (err) {
-      console.error("クリップボードへのコピーに失敗しました:", err);
+      console.error('クリップボードへのコピーに失敗しました:', err);
     }
   };
 
@@ -69,7 +72,6 @@ export default function InterviewSlotsList({
       </GlassCard>
     );
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

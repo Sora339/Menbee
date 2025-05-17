@@ -34,3 +34,16 @@ export interface InterviewSlotsResponse {
   error?: string;
   success: boolean;
 }
+
+export interface EventWithBuffer {
+  id: string;
+  summary: string;
+  start: Date;
+  end:   Date;
+  isAllDay: boolean;
+}
+
+export interface TimeSlot {
+  start: Date;
+  end:   Date;
+}
