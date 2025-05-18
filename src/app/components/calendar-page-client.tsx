@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,7 +13,6 @@ import { getInterviewSlots } from '../actions/interviewList';
 import CalendarEventsList from './calender_events_list';
 import InterviewSettingsForm from './interview_setting_form';
 import FormSubmitButton from './form-submit-button';
-
 
 // イベント設定のためのスキーマ定義
 const formSchema = z.object({
@@ -70,25 +69,11 @@ interface CalendarPageClientProps {
 export default function CalendarPageClient({
   initialEvents,
 }: CalendarPageClientProps) {
-  // 基本的な状態
-  const [calendarEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-  
   // モーダル関連の状態
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [interviewSlots, setInterviewSlots] = useState<InterviewSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  // ステート更新関数をメモ化
-  const setFilteredEventsCallback = useCallback((events: CalendarEvent[]) => {
-    setFilteredEvents(events);
-  }, []);
-
-  const setDateRangeCallback = useCallback((range: { from?: Date; to?: Date }) => {
-    setDateRange(range);
-  }, []);
 
   // フォームの初期化
   const methods = useForm<z.infer<typeof formSchema>>({
@@ -108,28 +93,29 @@ export default function CalendarPageClient({
     },
   });
 
-  // イベントをソートして日付範囲でフィルターする関数
-  const sortAndFilterEvents = useCallback(
-    (
-      events: CalendarEvent[],
-      range: { from?: Date; to?: Date },
-      validDays: string[]
-    ): CalendarEvent[] => {
-      const sortedEvents = [...events].sort((a, b) => {
-        const dateA = a.start.dateTime
-          ? new Date(a.start.dateTime)
-          : a.start.date
-          ? new Date(a.start.date)
-          : new Date(0);
-        const dateB = b.start.dateTime
-          ? new Date(b.start.dateTime)
-          : b.start.date
-          ? new Date(b.start.date)
-          : new Date(0);
-        return dateA.getTime() - dateB.getTime();
-      });
+  // フォーム送信ハンドラ
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // フィルタリングされたイベント情報を取得する関数
+    const getFilteredEventsData = () => {
+      // 日付範囲を解析
+      let dateRange: { from?: Date; to?: Date } = { from: undefined, to: undefined };
+      if (values.date_range) {
+        try {
+          const { from: rawFrom, to: rawTo } = JSON.parse(values.date_range);
+          dateRange = {
+            from: rawFrom ? new Date(rawFrom) : undefined,
+            to: rawTo ? new Date(rawTo) : undefined,
+          };
+        } catch {
+          // エラーの場合はデフォルト値を使用
+        }
+      }
 
-      return sortedEvents.filter((event) => {
+      // 選択された曜日
+      const validDays = values.days ?? [];
+
+      // イベントをフィルタリング
+      const filteredEvents = initialEvents.filter((event) => {
         const eventStart = event.start.dateTime
           ? new Date(event.start.dateTime)
           : event.start.date
@@ -138,9 +124,9 @@ export default function CalendarPageClient({
         if (!eventStart) return false;
 
         // 範囲の判定
-        if (range.from && eventStart < range.from) return false;
-        if (range.to) {
-          const endDate = new Date(range.to);
+        if (dateRange.from && eventStart < dateRange.from) return false;
+        if (dateRange.to) {
+          const endDate = new Date(dateRange.to);
           endDate.setHours(23, 59, 59, 999);
           if (eventStart > endDate) return false;
         }
@@ -158,16 +144,14 @@ export default function CalendarPageClient({
         const day = dayNames[eventStart.getDay()];
         return validDays.includes(day);
       });
-    },
-    [] // 依存配列は空でOK（関数内部で外部の値を参照していない）
-  );
 
-  // フォーム送信ハンドラ
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+      return filteredEvents;
+    };
+
     // フォームデータを整形
     const formDataWithCalendar = {
       ...values,
-      calendarData: filteredEvents,
+      calendarData: getFilteredEventsData(),
     };
 
     setIsLoading(true);
@@ -213,14 +197,9 @@ export default function CalendarPageClient({
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex lg:grid lg:grid-cols-2 gap-12 h-fit flex-col-reverse">
-              {/* カレンダーイベントリスト */}
+              {/* カレンダーイベントリスト（propsを大幅削減） */}
               <CalendarEventsList
-                calendarEvents={calendarEvents}
-                filteredEvents={filteredEvents} 
-                setFilteredEvents={setFilteredEventsCallback}
-                sortAndFilterEvents={sortAndFilterEvents}
-                dateRange={dateRange}
-                setDateRange={setDateRangeCallback}
+                calendarEvents={initialEvents}
               />
 
               {/* 面接設定フォーム */}

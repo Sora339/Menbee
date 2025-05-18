@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -16,28 +15,21 @@ import type { CalendarEvent } from '@/lib/calendar-service';
 
 interface CalendarEventsListProps {
   calendarEvents: CalendarEvent[];
-  filteredEvents: CalendarEvent[];
-  setFilteredEvents: (events: CalendarEvent[]) => void;
-  sortAndFilterEvents: (
-    events: CalendarEvent[],
-    range: { from?: Date; to?: Date },
-    validDays: string[]
-  ) => CalendarEvent[];
-  dateRange: { from?: Date; to?: Date };
-  setDateRange: (range: { from?: Date; to?: Date }) => void;
+}
+
+interface DateRange {
+  from?: Date;
+  to?: Date;
 }
 
 export default function CalendarEventsList({
   calendarEvents,
-  filteredEvents,
-  setFilteredEvents,
-  sortAndFilterEvents,
-  dateRange,
-  setDateRange,
 }: CalendarEventsListProps) {
-  const { control, getValues, setValue } = useFormContext();
+  'use memo';
+  
+  const { control, setValue, getValues } = useFormContext();
 
-  // date_rangeとdaysの値を監視
+  // フォームの値を監視
   const dateRangeValue = useWatch({
     control,
     name: 'date_range',
@@ -48,46 +40,88 @@ export default function CalendarEventsList({
     name: 'days',
   });
 
-  // 日付範囲と曜日が変更されたときにイベントを再フィルタリング
-  // 日付範囲と曜日が変更されたときにイベントを再フィルタリング
-  useEffect(() => {
-    const validDays = selectedDays ?? [];
+  // イベントをソートして日付範囲でフィルターする関数
+  // React Compilerにより自動的にメモ化される
+  const sortAndFilterEvents = (
+    events: CalendarEvent[],
+    range: DateRange,
+    validDays: string[]
+  ): CalendarEvent[] => {
+    const sortedEvents = [...events].sort((a, b) => {
+      const dateA = a.start.dateTime
+        ? new Date(a.start.dateTime)
+        : a.start.date
+        ? new Date(a.start.date)
+        : new Date(0);
+      const dateB = b.start.dateTime
+        ? new Date(b.start.dateTime)
+        : b.start.date
+        ? new Date(b.start.date)
+        : new Date(0);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-    let sorted: CalendarEvent[];
-    let newRange = { ...dateRange };
-    
-    if (dateRangeValue) {
-      try {
-        const { from: rawFrom, to: rawTo } = JSON.parse(dateRangeValue);
-        newRange = {
-          from: rawFrom ? new Date(rawFrom) : undefined,
-          to: rawTo ? new Date(rawTo) : undefined,
-        };
-        sorted = sortAndFilterEvents(calendarEvents, newRange, validDays);
-      } catch {
-        newRange = {};
-        sorted = sortAndFilterEvents(calendarEvents, {}, validDays);
+    return sortedEvents.filter((event) => {
+      const eventStart = event.start.dateTime
+        ? new Date(event.start.dateTime)
+        : event.start.date
+        ? new Date(event.start.date)
+        : null;
+      if (!eventStart) return false;
+
+      // 範囲の判定
+      if (range.from && eventStart < range.from) return false;
+      if (range.to) {
+        const endDate = new Date(range.to);
+        endDate.setHours(23, 59, 59, 999);
+        if (eventStart > endDate) return false;
       }
-    } else {
-      newRange = {};
-      sorted = sortAndFilterEvents(calendarEvents, {}, validDays);
-    }
 
-    // 参照比較を行い、実際に値が変わった場合のみ状態を更新
-    if (JSON.stringify(newRange) !== JSON.stringify(dateRange)) {
-      setDateRange(newRange);
+      // 曜日でフィルタリング
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const day = dayNames[eventStart.getDay()];
+      return validDays.includes(day);
+    });
+  };
+
+  // 日付範囲を解析
+  // React Compilerにより自動的にメモ化される
+  const dateRange: DateRange = (() => {
+    if (!dateRangeValue) {
+      return { from: undefined, to: undefined };
     }
     
-    // 参照比較を行い、実際に値が変わった場合のみ状態を更新
-    const sortedJson = JSON.stringify(sorted);
-    const filteredJson = JSON.stringify(filteredEvents);
-    if (sortedJson !== filteredJson) {
-      setFilteredEvents(sorted);
+    try {
+      const { from: rawFrom, to: rawTo } = JSON.parse(dateRangeValue);
+      return {
+        from: rawFrom ? new Date(rawFrom) : undefined,
+        to: rawTo ? new Date(rawTo) : undefined,
+      };
+    } catch {
+      return { from: undefined, to: undefined };
     }
+  })();
 
-    // events配列を更新（既存のロジックを保持）
+  // フィルタリングされたイベント
+  // React Compilerにより自動的にメモ化される
+  const filteredEvents = (() => {
+    const validDays = selectedDays ?? [];
+    return sortAndFilterEvents(calendarEvents, dateRange, validDays);
+  })();
+
+  // フォームのevents配列を更新
+  // React Compilerにより依存関係が自動で管理される
+  const updateFormEvents = () => {
     const currentEvents = getValues('events');
-    const updatedEvents = sorted.map((event) => {
+    const updatedEvents = filteredEvents.map((event) => {
       const existing = currentEvents.find((e: { id: string }) => e.id === event.id);
       return {
         id: event.id,
@@ -97,24 +131,22 @@ export default function CalendarEventsList({
       };
     });
 
+    // フォームの値を同期（参照が変わった場合のみ）
     const currentJson = JSON.stringify(currentEvents);
     const updatedJson = JSON.stringify(updatedEvents);
     
     if (currentJson !== updatedJson) {
-      setValue('events', updatedEvents);
+      // setValueの呼び出しはレンダリング中ではなく、副作用として実行
+      setTimeout(() => {
+        setValue('events', updatedEvents);
+      }, 0);
     }
-  }, [
-    dateRangeValue,
-    selectedDays,
-    calendarEvents,
-    dateRange,
-    filteredEvents,
-    getValues,
-    setValue,
-    sortAndFilterEvents,
-    setDateRange,
-    setFilteredEvents
-  ]);
+
+    return updatedEvents;
+  };
+
+  // 副作用として実行
+  updateFormEvents();
 
   return (
     <motion.div
