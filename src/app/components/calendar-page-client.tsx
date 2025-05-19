@@ -52,6 +52,8 @@ const formSchema = z.object({
     .default([]),
 });
 
+type FormSchema = z.infer<typeof formSchema>;
+
 export const daysOfWeek = [
   { label: "月曜日", value: "monday" },
   { label: "火曜日", value: "tuesday" },
@@ -60,7 +62,7 @@ export const daysOfWeek = [
   { label: "金曜日", value: "friday" },
   { label: "土曜日", value: "saturday" },
   { label: "日曜日", value: "sunday" },
-];
+] as const;
 
 interface CalendarPageClientProps {
   initialEvents: CalendarEvent[];
@@ -76,7 +78,7 @@ export default function CalendarPageClient({
   const [actionError, setActionError] = useState<string | null>(null);
 
   // フォームの初期化
-  const methods = useForm<z.infer<typeof formSchema>>({
+  const methods = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date_range: "",
@@ -94,7 +96,7 @@ export default function CalendarPageClient({
   });
 
   // フォーム送信ハンドラ
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormSchema) {
     // フィルタリングされたイベント情報を取得する関数
     const getFilteredEventsData = () => {
       // 日付範囲を解析
@@ -140,7 +142,7 @@ export default function CalendarPageClient({
           "thursday",
           "friday",
           "saturday",
-        ];
+        ] as const;
         const day = dayNames[eventStart.getDay()];
         return validDays.includes(day);
       });
@@ -197,14 +199,13 @@ export default function CalendarPageClient({
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex lg:grid lg:grid-cols-2 gap-12 h-fit flex-col-reverse">
-              {/* カレンダーイベントリスト（propsを大幅削減） */}
+              {/* カレンダーイベントリスト */}
               <CalendarEventsList
                 calendarEvents={initialEvents}
               />
 
               {/* 面接設定フォーム */}
-              <InterviewSettingsForm
-              />
+              <InterviewSettingsForm />
             </div>
 
             {/* 送信ボタン */}
