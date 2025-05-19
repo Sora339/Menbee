@@ -58,7 +58,7 @@ export default function InterviewSettingsForm() {
                     onChange={(date) =>
                       field.onChange(JSON.stringify(date))
                     }
-                    className="sm:w-[60%] w-[90%] h-[42px]"
+                    className="sm:w-[60%] w-[90%]"
                   />
                 </FormControl>
                 <FormMessage />
