@@ -1,5 +1,5 @@
 // lib/calendar-service.ts
-
+import { auth } from "../../auth";
 import { prisma } from "../../prisma";
 
 export interface CalendarEvent {
@@ -17,11 +17,17 @@ interface GoogleCalendar {
 }
 
 // カレンダーイベント取得関数
-export async function getCalendarEvents(email: string): Promise<{
+export async function getCalendarEvents(): Promise<{
   events: CalendarEvent[];
   authError?: boolean;
 }> {
   try {
+    const session = await auth();
+       if (!session?.user?.email) {
+        return { events: [], authError: true };
+      }
+    const email = session?.user?.email;
+   
     console.log("🔍 Fetching calendar events for user:", email);
     
     // Prismaからトークンを取得

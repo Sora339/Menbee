@@ -45,7 +45,7 @@ export default function InterviewSettingsForm() {
               : { from: undefined, to: undefined };
 
             return (
-              <FormItem className="space-y-2">
+              <FormItem>
                 <FormLabel className="text-lg font-medium text-white">
                   面接予定期間
                 </FormLabel>
@@ -58,7 +58,7 @@ export default function InterviewSettingsForm() {
                     onChange={(date) =>
                       field.onChange(JSON.stringify(date))
                     }
-                    className="sm:w-[60%] w-[90%]"
+                    className="sm:w-[60%] w-[90%] h-[42px]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -71,7 +71,7 @@ export default function InterviewSettingsForm() {
           control={control}
           name="days"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem>
               <FormLabel className="text-lg font-medium text-white">
                 面接可能曜日
               </FormLabel>
@@ -126,7 +126,7 @@ export default function InterviewSettingsForm() {
                   <Input
                     {...field}
                     type="time"
-                    className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24"
+                    className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24 h-[42px]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -149,7 +149,7 @@ export default function InterviewSettingsForm() {
                   <Input
                     {...field}
                     type="time"
-                    className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24"
+                    className="bg-white/30 backdrop-blur-sm border-indigo-200 w-24 h-[42px]"
                   />
                 </FormControl>
                 <FormMessage />

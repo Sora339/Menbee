@@ -14,7 +14,7 @@ interface NumberInputProps {
 export function NumberInput({
   value,
   onChange,
-  step = 15,
+  step = 0,
   min = 0,
   className = "",
 }: NumberInputProps) {
@@ -40,9 +40,13 @@ export function NumberInput({
 
   const handleDecrement = () => {
     const newValue = value - step;
-    if (newValue < min) return;
-    onChange(newValue);
-    setInputValue(newValue.toString());
+    if (newValue < min) {
+      setInputValue(min.toString());
+      onChange(min);
+    } else {
+      onChange(newValue);
+      setInputValue(newValue.toString());
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,14 +76,39 @@ export function NumberInput({
   if (!isMobile) {
     return (
       <div className={`flex items-center ${className}`}>
-          <Input
-            type="number"
-            className={`bg-white/50 w-20`}
-            value={value.toString()}
-            step={step}
-            min={min}
-            onChange={(e) => onChange(Number.parseInt(e.target.value) || min)}
-          />
+        <input
+          type="text"
+          pattern="[0-9]*"
+          className={`p-2 px-3 bg-white/30 w-20 backdrop-blur-sm border border-indigo-200 border-r-0 rounded-none !rounded-tl-md !rounded-bl-md`}
+          value={inputValue}
+          min={min}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        <div className="left-full inset-y-0 flex flex-col h-full bg-transparent">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-[21px] w-6 rounded-none rounded-tr-md px-0 bg-white/50 border border-b-[0.5px] border-indigo-200 "
+            onClick={handleIncrement}
+            tabIndex={-1}
+          >
+            <ChevronUp className="h-3 w-3" />
+            <span className="sr-only">増加</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-[21px] w-6 rounded-none rounded-br-md px-0 bg-white/50 border border-t-[0.5px] border-indigo-200"
+            onClick={handleDecrement}
+            tabIndex={-1}
+          >
+            <ChevronDown className="h-3 w-3" />
+            <span className="sr-only">減少</span>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -94,7 +123,6 @@ export function NumberInput({
         className={`p-2 bg-white/30 w-20 backdrop-blur-sm border border-indigo-200 border-r-0 rounded-none !rounded-tl-md !rounded-bl-md`}
         value={inputValue}
         min={min}
-        step={step}
         onChange={handleChange}
         onBlur={handleBlur}
       />
