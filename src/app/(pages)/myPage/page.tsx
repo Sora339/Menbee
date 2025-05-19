@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import CalendarPageClient from "@/app/components/calendar-page-client";
 import { getCalendarEvents } from "@/lib/calendar-service";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CalendarPage() {
   // サーバーサイドでカレンダーイベントを取得
   const { events, authError } = await getCalendarEvents();
