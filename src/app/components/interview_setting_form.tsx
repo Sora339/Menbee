@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useFormContext } from 'react-hook-form';
-import { motion } from 'framer-motion';
+import { useFormContext } from "react-hook-form";
+import { motion } from "framer-motion";
 import {
   FormControl,
   FormDescription,
@@ -9,14 +9,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { DatePickerWithRange } from '@/components/ui/date-picker-range';
-import { GlassCard } from '@/components/ui/glass-card';
-import { NumberInput } from '@/components/ui/number-input';
-import { daysOfWeek } from './calendar-page-client';
-
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePickerWithRange } from "@/components/ui/date-picker-range";
+import { GlassCard } from "@/components/ui/glass-card";
+import { NumberInput } from "@/components/ui/number-input";
+import { daysOfWeek } from "./calendar-page-client";
 
 export default function InterviewSettingsForm() {
   const { control } = useFormContext();
@@ -40,9 +39,16 @@ export default function InterviewSettingsForm() {
           control={control}
           name="date_range"
           render={({ field }) => {
-            const value = field.value
-              ? JSON.parse(field.value)
-              : { from: undefined, to: undefined };
+            const parseValue = (val: string) => {
+              if (!val) return { from: undefined, to: undefined };
+              try {
+                return JSON.parse(val);
+              } catch {
+                return { from: undefined, to: undefined };
+              }
+            };
+
+            const value = parseValue(field.value);
 
             return (
               <FormItem>
@@ -55,9 +61,14 @@ export default function InterviewSettingsForm() {
                 <FormControl>
                   <DatePickerWithRange
                     value={value}
-                    onChange={(date) =>
-                      field.onChange(JSON.stringify(date))
-                    }
+                    onChange={(date) => {
+                      try {
+                        field.onChange(JSON.stringify(date));
+                      } catch (error) {
+                        console.error("Date serialization error:", error);
+                        field.onChange("");
+                      }
+                    }}
                     className="sm:w-[60%] w-[90%]"
                   />
                 </FormControl>

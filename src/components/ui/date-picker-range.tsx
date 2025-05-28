@@ -27,11 +27,18 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(value);
 
+  // propsの変更時のみ内部状態を更新
   React.useEffect(() => {
+    setDate(value);
+  }, [value]);
+
+  // カレンダーでの選択時のハンドラー
+  const handleDateSelect = (newDate: DateRange | undefined) => {
+    setDate(newDate);
     if (onChange) {
-      onChange(date || { from: undefined, to: undefined });
+      onChange(newDate || { from: undefined, to: undefined });
     }
-  }, [date, onChange]);
+  };
 
   return (
     <div className={`${className}`}>
@@ -66,7 +73,7 @@ export function DatePickerWithRange({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={setDate}
+            onSelect={handleDateSelect}
             numberOfMonths={2}
           />
         </PopoverContent>

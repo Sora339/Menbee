@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { motion } from "framer-motion";
 
-import InterviewSlotsList from '@/app/components/interview-list';
-import type { CalendarEvent } from '@/lib/calendar-service';
-import { InterviewSlot } from '../../../type';
-import { getInterviewSlots } from '../actions/interviewList';
-import CalendarEventsList from './calender_events_list';
-import InterviewSettingsForm from './interview_setting_form';
-import FormSubmitButton from './form-submit-button';
+import InterviewSlotsList from "@/app/components/interview-list";
+import type { CalendarEvent } from "@/lib/calendar-service";
+import { InterviewSlot } from "../../../type";
+import { getInterviewSlots } from "../actions/interviewList";
+import CalendarEventsList from "./calender_events_list";
+import InterviewSettingsForm from "./interview_setting_form";
+import FormSubmitButton from "./form-submit-button";
 
 // イベント設定のためのスキーマ定義
 const formSchema = z.object({
@@ -87,7 +87,7 @@ export default function CalendarPageClient({
       end_time: "",
       minimum_duration: 30,
       events: initialEvents.map((event) => ({
-        id: event.id,
+        id: event?.id || "",
         selected: true,
         bufferBefore: 0,
         bufferAfter: 0,
@@ -100,7 +100,10 @@ export default function CalendarPageClient({
     // フィルタリングされたイベント情報を取得する関数
     const getFilteredEventsData = () => {
       // 日付範囲を解析
-      let dateRange: { from?: Date; to?: Date } = { from: undefined, to: undefined };
+      let dateRange: { from?: Date; to?: Date } = {
+        from: undefined,
+        to: undefined,
+      };
       if (values.date_range) {
         try {
           const { from: rawFrom, to: rawTo } = JSON.parse(values.date_range);
@@ -200,9 +203,7 @@ export default function CalendarPageClient({
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex lg:grid lg:grid-cols-2 gap-12 h-fit flex-col-reverse">
               {/* カレンダーイベントリスト */}
-              <CalendarEventsList
-                calendarEvents={initialEvents}
-              />
+              <CalendarEventsList calendarEvents={initialEvents} />
 
               {/* 面接設定フォーム */}
               <InterviewSettingsForm />
