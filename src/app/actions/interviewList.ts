@@ -114,20 +114,8 @@ export async function getInterviewSlots(formData: FormData) {
       }
       // 時間指定イベント
       else if (ev.start.dateTime && ev.end.dateTime) {
-        const zonedStart = toZonedTime(parseISO(ev.start.dateTime), TIMEZONE);
-        const zonedEnd   = toZonedTime(parseISO(ev.end.dateTime),   TIMEZONE);
-        const startBufLocal = addMinutes(zonedStart, -setting.bufferBefore);
-        const endBufLocal   = addMinutes(zonedEnd,   setting.bufferAfter);
-
-        // Tokyo 壁掛け時間の文字列にして +09:00 を付与 → parseISO で UTC Date に
-        const startUtc = parseISO(
-          tzFormat(startBufLocal, "yyyy-MM-dd'T'HH:mm", { timeZone: TIMEZONE }) +
-            ":00+09:00"
-        );
-        const endUtc = parseISO(
-          tzFormat(endBufLocal, "yyyy-MM-dd'T'HH:mm", { timeZone: TIMEZONE }) +
-            ":00+09:00"
-        );
+        const startUtc = addMinutes(parseISO(ev.start.dateTime), -setting.bufferBefore);
+        const endUtc = addMinutes(parseISO(ev.end.dateTime), setting.bufferAfter);
 
         excludedEvents.push({
           id: ev.id,

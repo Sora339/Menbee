@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext, useWatch } from 'react-hook-form';
-import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
   FormControl,
@@ -11,10 +10,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { GlassCard } from '@/components/ui/glass-card';
 import { NumberInput } from '@/components/ui/number-input';
-import type { CalendarEvent } from '@/lib/calendar-service';
+import { FormattedCalendarEvent } from '../../../type';
 
 interface CalendarEventsListProps {
-  calendarEvents: CalendarEvent[];
+  events: FormattedCalendarEvent[];
 }
 
 interface DateRange {
@@ -23,7 +22,7 @@ interface DateRange {
 }
 
 export default function CalendarEventsList({
-  calendarEvents,
+  events,
 }: CalendarEventsListProps) {
   'use memo';
   
@@ -41,31 +40,31 @@ export default function CalendarEventsList({
   });
 
   // イベントをソートして日付範囲でフィルターする関数
-  // React Compilerにより自動的にメモ化される
   const sortAndFilterEvents = (
-    events: CalendarEvent[],
+    events: FormattedCalendarEvent[],
     range: DateRange,
     validDays: string[]
-  ): CalendarEvent[] => {
+  ): FormattedCalendarEvent[] => {
+    
     const sortedEvents = [...events].sort((a, b) => {
-      const dateA = a.start.dateTime
-        ? new Date(a.start.dateTime)
-        : a.start.date
-        ? new Date(a.start.date)
+      const dateA = a.startDateTime
+        ? new Date(a.startDateTime)
+        : a.startDate
+        ? new Date(a.startDate)
         : new Date(0);
-      const dateB = b.start.dateTime
-        ? new Date(b.start.dateTime)
-        : b.start.date
-        ? new Date(b.start.date)
+      const dateB = b.startDateTime
+        ? new Date(b.startDateTime)
+        : b.startDate
+        ? new Date(b.startDate)
         : new Date(0);
       return dateA.getTime() - dateB.getTime();
     });
 
     return sortedEvents.filter((event) => {
-      const eventStart = event.start.dateTime
-        ? new Date(event.start.dateTime)
-        : event.start.date
-        ? new Date(event.start.date)
+      const eventStart = event.startDateTime
+        ? new Date(event.startDateTime)
+        : event.startDate
+        ? new Date(event.startDate)
         : null;
       if (!eventStart) return false;
 
@@ -114,7 +113,7 @@ export default function CalendarEventsList({
   // React Compilerにより自動的にメモ化される
   const filteredEvents = (() => {
     const validDays = selectedDays ?? [];
-    return sortAndFilterEvents(calendarEvents, dateRange, validDays);
+    return sortAndFilterEvents(events, dateRange, validDays);
   })();
 
   // フォームのevents配列を更新
@@ -200,37 +199,15 @@ export default function CalendarEventsList({
                           {event.summary}
                         </h3>
                         <p className="text-gray-600 dark:text-gray-300 w-fit">
-                          開始:{' '}
-                          {event.start.dateTime
-                            ? format(
-                                new Date(event.start.dateTime),
-                                'yyyy/MM/dd HH:mm'
-                              )
-                            : event.start.date
-                            ? format(
-                                new Date(event.start.date),
-                                'yyyy/MM/dd'
-                              )
-                            : '日付未定'}
+                          開始: {event.startFormatted || '日付未定'}
                         </p>
                         <p className="text-gray-600 dark:text-gray-300 w-fit">
-                          終了:{' '}
-                          {event.end.dateTime
-                            ? format(
-                                new Date(event.end.dateTime),
-                                'yyyy/MM/dd HH:mm'
-                              )
-                            : event.end.date
-                            ? format(
-                                new Date(event.end.date),
-                                'yyyy/MM/dd'
-                              )
-                            : '日付未定'}
+                          終了: {event.endFormatted || '日付未定'}
                         </p>
                       </div>
                       <div className="flex sm:flex-col gap-2 sm:w-[30%] md:w-[270px] xl:w-[260px] mt-2 md:mt-0 ml-auto text-right">
                         {/* 時間指定のある予定のみ余裕時間を表示 */}
-                        {event.start.dateTime && (
+                        {event.startDateTime && (
                           <FormField
                             control={control}
                             name={`events.${index}.bufferBefore`}
@@ -256,7 +233,7 @@ export default function CalendarEventsList({
                             )}
                           />
                         )}
-                        {event.end.dateTime && (
+                        {event.endDateTime && (
                           <FormField
                             control={control}
                             name={`events.${index}.bufferAfter`}

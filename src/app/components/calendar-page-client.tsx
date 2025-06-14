@@ -7,8 +7,8 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 
 import InterviewSlotsList from "@/app/components/interview-list";
-import type { CalendarEvent } from "@/lib/calendar-service";
-import { InterviewSlot } from "../../../type";
+import { FormattedCalendarEvent, InterviewSlot } from "../../../type";
+import { CalendarEvent as OriginalCalendarEventData } from "../../../type";
 import { getInterviewSlots } from "../actions/interviewList";
 import CalendarEventsList from "./calender_events_list";
 import InterviewSettingsForm from "./interview_setting_form";
@@ -65,11 +65,11 @@ export const daysOfWeek = [
 ] as const;
 
 interface CalendarPageClientProps {
-  initialEvents: CalendarEvent[];
+  events: FormattedCalendarEvent[];
 }
 
 export default function CalendarPageClient({
-  initialEvents,
+  events,
 }: CalendarPageClientProps) {
   // モーダル関連の状態
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,8 +86,8 @@ export default function CalendarPageClient({
       start_time: "",
       end_time: "",
       minimum_duration: 30,
-      events: initialEvents.map((event) => ({
-        id: event?.id || "",
+      events: events.map((event) => ({
+        id: event.id,
         selected: true,
         bufferBefore: 0,
         bufferAfter: 0,
@@ -98,7 +98,7 @@ export default function CalendarPageClient({
   // フォーム送信ハンドラ
   async function onSubmit(values: FormSchema) {
     // フィルタリングされたイベント情報を取得する関数
-    const getFilteredEventsData = () => {
+    const getFilteredEventsData = (): OriginalCalendarEventData[] => {
       // 日付範囲を解析
       let dateRange: { from?: Date; to?: Date } = {
         from: undefined,
@@ -119,41 +119,54 @@ export default function CalendarPageClient({
       // 選択された曜日
       const validDays = values.days ?? [];
 
-      // イベントをフィルタリング
-      const filteredEvents = initialEvents.filter((event) => {
-        const eventStart = event.start.dateTime
-          ? new Date(event.start.dateTime)
-          : event.start.date
-          ? new Date(event.start.date)
-          : null;
-        if (!eventStart) return false;
+      // フラットな構造からサーバーアクション用の形式に変換してフィルタリング
+      const filteredEvents = events
+        .map((event): OriginalCalendarEventData => ({
+          id: event.id,
+          summary: event.summary,
+          start: {
+            dateTime: event.startDateTime,
+            date: event.startDate,
+          },
+          end: {
+            dateTime: event.endDateTime,
+            date: event.endDate,
+          },
+        }))
+        .filter((event) => {
+          const eventStart = event.start.dateTime
+            ? new Date(event.start.dateTime)
+            : event.start.date
+            ? new Date(event.start.date)
+            : null;
+          if (!eventStart) return false;
 
-        // 範囲の判定
-        if (dateRange.from && eventStart < dateRange.from) return false;
-        if (dateRange.to) {
-          const endDate = new Date(dateRange.to);
-          endDate.setHours(23, 59, 59, 999);
-          if (eventStart > endDate) return false;
-        }
+          // 範囲の判定
+          if (dateRange.from && eventStart < dateRange.from) return false;
+          if (dateRange.to) {
+            const endDate = new Date(dateRange.to);
+            endDate.setHours(23, 59, 59, 999);
+            if (eventStart > endDate) return false;
+          }
 
-        // 曜日でフィルタリング
-        const dayNames = [
-          "sunday",
-          "monday",
-          "tuesday",
-          "wednesday",
-          "thursday",
-          "friday",
-          "saturday",
-        ] as const;
-        const day = dayNames[eventStart.getDay()];
-        return validDays.includes(day);
-      });
+          // 曜日でフィルタリング
+          const dayNames = [
+            "sunday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+          ] as const;
+          const day = dayNames[eventStart.getDay()];
+          return validDays.includes(day);
+        });
 
       return filteredEvents;
     };
 
-    // フォームデータを整形
+    // フォームデータを整形（元データを使用）
     const formDataWithCalendar = {
       ...values,
       calendarData: getFilteredEventsData(),
@@ -203,7 +216,7 @@ export default function CalendarPageClient({
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex lg:grid lg:grid-cols-2 gap-12 h-fit flex-col-reverse">
               {/* カレンダーイベントリスト */}
-              <CalendarEventsList calendarEvents={initialEvents} />
+              <CalendarEventsList events={events} />
 
               {/* 面接設定フォーム */}
               <InterviewSettingsForm />

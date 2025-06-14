@@ -1,8 +1,19 @@
 export interface CalendarEvent {
   id: string;
-  summary: string;
+  summary?: string;
   start: { dateTime?: string; date?: string };
   end:   { dateTime?: string; date?: string };
+}
+
+export interface FormattedCalendarEvent {
+  id: string;
+  summary?: string;
+  startDateTime?: string;
+  startDate?: string;
+  endDateTime?: string;
+  endDate?: string;
+  startFormatted?: string;
+  endFormatted?: string;
 }
 
 export interface InterviewFormData {
@@ -28,12 +39,6 @@ export interface InterviewSlot {
   formatted: string;
 }
 
-export interface InterviewSlotsResponse {
-  slots?: InterviewSlot[];
-  message?: string;
-  error?: string;
-  success: boolean;
-}
 
 export interface EventWithBuffer {
   id: string;
