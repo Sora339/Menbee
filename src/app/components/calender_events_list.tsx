@@ -10,7 +10,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { GlassCard } from '@/components/ui/glass-card';
 import { NumberInput } from '@/components/ui/number-input';
-import { FormattedCalendarEvent } from '../../../type';
+import { FormattedCalendarEvent } from '../../type';
 
 interface CalendarEventsListProps {
   events: FormattedCalendarEvent[];

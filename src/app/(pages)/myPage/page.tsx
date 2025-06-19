@@ -4,8 +4,8 @@ import { parseISO, addDays } from "date-fns";
 import { toZonedTime, format as tzFormat } from "date-fns-tz";
 import CalendarPageClient from "@/app/components/calendar-page-client";
 import { getCalendarEvents } from "@/lib/calendar-service";
-import { CalendarEvent as OriginalCalendarEvent } from "../../../../type";
-import { FormattedCalendarEvent } from "../../../../type";
+import { CalendarEvent as OriginalCalendarEvent } from "../../../type";
+import { FormattedCalendarEvent } from "../../../type";
 
 export const dynamic = 'force-dynamic';
 

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
-import { InterviewSlot } from '../../../type';
+import { InterviewSlot } from '../../type';
 
 
 interface InterviewSlotsListProps {

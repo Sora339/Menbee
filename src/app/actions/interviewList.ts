@@ -10,7 +10,7 @@ import {
 import { ja } from "date-fns/locale";
 import { toZonedTime, format as tzFormat } from "date-fns-tz";
 import { z } from "zod";
-import { EventWithBuffer, TimeSlot } from "../../../type";
+import { EventWithBuffer, TimeSlot } from "../../type";
 
 const TIMEZONE = "Asia/Tokyo";
 

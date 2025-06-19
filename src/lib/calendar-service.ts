@@ -1,7 +1,7 @@
 // lib/calendar-service.ts
 import { auth } from "../../auth";
 import { prisma } from "../../prisma";
-import { CalendarEvent } from "../../type";
+import { CalendarEvent } from "../type";
 
 interface GoogleCalendar {
   id: string;

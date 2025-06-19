@@ -7,8 +7,8 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 
 import InterviewSlotsList from "@/app/components/interview-list";
-import { FormattedCalendarEvent, InterviewSlot } from "../../../type";
-import { CalendarEvent as OriginalCalendarEventData } from "../../../type";
+import { FormattedCalendarEvent, InterviewSlot } from "../../type";
+import { CalendarEvent as OriginalCalendarEventData } from "../../type";
 import { getInterviewSlots } from "../actions/interviewList";
 import CalendarEventsList from "./calender_events_list";
 import InterviewSettingsForm from "./interview_setting_form";

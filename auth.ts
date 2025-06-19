@@ -50,6 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
 });
 
 export { handlers as GET, handlers as POST };

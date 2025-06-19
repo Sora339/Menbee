@@ -1,10 +1,8 @@
-FROM node:22-bookworm-slim
+FROM node:22-alpine
 
 WORKDIR /app
 
-
-
-# OpenSSLと必要なパッケージをインストール
+# OpenSSL 3.0をインストール（bookworm-slimはデフォルトでOpenSSL 3.0を使用）
 RUN apt-get update && apt-get install -y \
     openssl \
     ca-certificates \
@@ -12,17 +10,16 @@ RUN apt-get update && apt-get install -y \
 
 # package.json と package-lock.json をコピー
 COPY package.json package-lock.json ./
-
 RUN npm install
 
-# ソースコードをコピー
+# prisma/schema.prisma をコピー
+COPY prisma/ ./prisma/
+
+# Prisma Client を生成
+RUN npx prisma generate
+
+# 残りのソースコードをコピー
 COPY . .
 
-# Prismaスキーマが存在する場合のみgenerate実行
-RUN if [ -f "prisma/schema.prisma" ] || [ -f "schema.prisma" ]; then \
-    npx prisma generate; \
-    fi
-
 EXPOSE 3000
-
 CMD ["npm", "run", "dev"]
