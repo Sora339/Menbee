@@ -13,7 +13,7 @@ export default async function Header() {
         <div className="flex items-center py-2">
 
         <Image src="/image/logo2.webp" alt="logo" width={512} height={512} className="h-10 w-10"/>
-        <p className="">endee</p>
+        <p className="">enbee</p>
         </div>
         </Link>
         {session && <LogOutButton />}
