@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Menbee
+Menbeeは、面接日程候補リストを簡単に作ることができるWebアプリです。
 
-## Getting Started
+![top](https://github.com/user-attachments/assets/8de906e0-7f0f-42ca-b4bc-a804affbb87b)
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+就活が始まり、ESも通過した！次はいよいよ面接！でもちょっと面倒なことがある...  
+「**平日の日中で、都合のいい日程を複数ご返信ください**」  
+うーん面倒くさい！
+## 開発の経緯
+- **テーマ**：就職活動で面倒なボトルネックを解消したい！
+- **現在の課題**: カレンダーを見ながら手動で空いている日程のリストを作るのが面倒くさい
+- **世間が求めているもの**: 空いている日程のリストを自動で作ってくれるもの
+#### ➡️ このニーズに応えられるようにしよう！
+## 主な機能
+- **ログイン機能**: Googleログイン機能
+- **予定取得機能**: 自分のGoogleカレンダーの予定を表示
+- **条件入力フォーム**: 面接可能期間等をフォーム入力
+- **リスト表示機能**: すでにある予定の時間以外のリストを作成して表示
+- **面接予定確定機能**: 面接日程が決定したらリストから選んでカレンダーに追加
+## 技術構成
+![Menbee3muji drawio](https://github.com/user-attachments/assets/4493fe41-3545-4fa0-aea2-6061f7adc2ee)
+## こだわりポイント
+- 詳細な条件設定が可能でありながら、直感的な操作で負担がかからない
+- メール返信に特化した出力形式
+- ユーザーの予定を保持しないセキュアな設計
+- E2EでセキュアなHTTPS通信
