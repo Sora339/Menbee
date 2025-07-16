@@ -70,7 +70,7 @@ export default function Home() {
       className="min-h-screen flex flex-col"
     >
       {/* ヒーローセクション */}
-      <section className="relative flex flex-col items-center justify-center min-h-[80vh] px-4 overflow-hidden">
+      <section className="relative flex flex-col items-center justify-center py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-background/80" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_center,rgba(var(--foreground-rgb),0.08),transparent_65%)]" />
 
@@ -143,7 +143,7 @@ export default function Home() {
       </section>
 
       {/* 機能セクション */}
-      <section id="features" className="py-20 px-4 bg-muted/50">
+      <section id="features" className="py-20 px-4 bg-muted/30 text-white">
         <div className="container mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             主な機能
@@ -304,7 +304,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
           >
-            面接日程の調整をもっと簡単に
+            面接日程の調整を<span className="inline-block">もっと簡単に</span>
           </motion.h2>
 
           <motion.p
