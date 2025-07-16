@@ -90,7 +90,7 @@ export default function InterviewSlotsList({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-none bg-gradient-to-r from-cyan-600 to-indigo-600 hover:bg-gradient-to-l"
+              className="h-8 w-8 border-none bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:shadow-lg hover:shadow-indigo-600/20 transition-all duration-300 disabled:opacity-70"
               onClick={copyToClipboard}
               title="リストをコピー"
             >
@@ -110,7 +110,7 @@ export default function InterviewSlotsList({
           <div className="flex justify-center">
             <Button
               onClick={onClose}
-              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 w-fit"
+              className="bg-gradient-to-r bg-slate-600 hover:bg-slate-600 hover:opacity-90 w-fit"
             >
               閉じる
             </Button>
