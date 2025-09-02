@@ -102,9 +102,9 @@ export async function getInterviewSlots(formData: FormData) {
 
       // 終日イベント
       if (ev.start.date && ev.end.date) {
-        // 終日イベントの日付をTIMEZONE基準で解釈してUTC Dateオブジェクトを作成
-        const startDateJST = toZonedTime(parseISO(`${ev.start.date}T00:00:00`), TIMEZONE);
-        const endDateJST = toZonedTime(parseISO(`${ev.end.date}T23:59:59`), TIMEZONE);
+        // 終日イベントの日付をJST時刻として解釈し、UTC Dateオブジェクトを作成
+        const startDateJST = parseISO(`${ev.start.date}T00:00:00+09:00`);
+        const endDateJST = parseISO(`${ev.end.date}T23:59:59+09:00`);
         
         excludedEvents.push({
           id: ev.id,
@@ -142,9 +142,9 @@ export async function getInterviewSlots(formData: FormData) {
       // Tokyo 壁掛け日付文字列
       const dateStr = tzFormat(curr, "yyyy-MM-dd", { timeZone: TIMEZONE });
       
-      // 開始／終了時刻をTIMEZONE基準でUTC Dateオブジェクトを作成
-      const dayStart = toZonedTime(parseISO(`${dateStr}T${validatedData.start_time}:00`), TIMEZONE);
-      const dayEnd   = toZonedTime(parseISO(`${dateStr}T${validatedData.end_time}:00`), TIMEZONE);
+      // 開始／終了時刻をJST時刻として解釈し、UTC Dateオブジェクトを作成
+      const dayStart = parseISO(`${dateStr}T${validatedData.start_time}:00+09:00`);
+      const dayEnd   = parseISO(`${dateStr}T${validatedData.end_time}:00+09:00`);
 
       // 終日イベントのある日はスキップ
       // 終日イベントとdayStartの日付をJST基準で比較
