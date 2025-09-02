@@ -1,10 +1,9 @@
-'use server';
+﻿'use server';
 
 import {
   parseISO,
   addMinutes,
   startOfDay as dfStartOfDay,
-  endOfDay as dfEndOfDay,
   getDay as dfGetDay,
 } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -103,12 +102,15 @@ export async function getInterviewSlots(formData: FormData) {
 
       // 終日イベント
       if (ev.start.date && ev.end.date) {
-        const dt = toZonedTime(parseISO(ev.start.date), TIMEZONE);
+        // 終日イベントの日付をTIMEZONE基準で解釈してUTC Dateオブジェクトを作成
+        const startDateJST = toZonedTime(parseISO(`${ev.start.date}T00:00:00`), TIMEZONE);
+        const endDateJST = toZonedTime(parseISO(`${ev.end.date}T23:59:59`), TIMEZONE);
+        
         excludedEvents.push({
           id: ev.id,
           summary: ev.summary || "終日イベント",
-          start: dfStartOfDay(dt),
-          end:   dfEndOfDay(dt),
+          start: startDateJST,
+          end: endDateJST,
           isAllDay: true,
         });
       }
@@ -139,15 +141,24 @@ export async function getInterviewSlots(formData: FormData) {
 
       // Tokyo 壁掛け日付文字列
       const dateStr = tzFormat(curr, "yyyy-MM-dd", { timeZone: TIMEZONE });
-      // 開始／終了時刻を Tokyo の "+09:00" 付き ISO 文字列 → UTC Date
-      const dayStart = parseISO(`${dateStr}T${validatedData.start_time}:00+09:00`);
-      const dayEnd   = parseISO(`${dateStr}T${validatedData.end_time}:00+09:00`);
+      
+      // 開始／終了時刻をTIMEZONE基準でUTC Dateオブジェクトを作成
+      const dayStart = toZonedTime(parseISO(`${dateStr}T${validatedData.start_time}:00`), TIMEZONE);
+      const dayEnd   = toZonedTime(parseISO(`${dateStr}T${validatedData.end_time}:00`), TIMEZONE);
 
       // 終日イベントのある日はスキップ
-      const hasAllDay = excludedEvents.some(e =>
-        e.isAllDay &&
-        dfStartOfDay(e.start).getTime() === dfStartOfDay(dayStart).getTime()
-      );
+      // 終日イベントとdayStartの日付をJST基準で比較
+      const currentDateJST = tzFormat(curr, "yyyy-MM-dd", { timeZone: TIMEZONE });
+      const hasAllDay = excludedEvents.some(e => {
+        if (!e.isAllDay) return false;
+        
+        // 終日イベントの開始日と終了日をJST基準で取得
+        const eventStartDateJST = tzFormat(e.start, "yyyy-MM-dd", { timeZone: TIMEZONE });
+        const eventEndDateJST = tzFormat(e.end, "yyyy-MM-dd", { timeZone: TIMEZONE });
+        
+        // 現在の日付が終日イベントの期間内（開始日〜終了日）にあるかチェック
+        return currentDateJST >= eventStartDateJST && currentDateJST <= eventEndDateJST;
+      });
       if (hasAllDay) continue;
 
       const daySlots = findAvailableTimeSlots(
