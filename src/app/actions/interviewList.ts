@@ -103,9 +103,11 @@ export async function getInterviewSlots(formData: FormData) {
       // 終日イベント
       if (ev.start.date && ev.end.date) {
         // 終日イベントの日付をJST時刻として解釈し、UTC Dateオブジェクトを作成
+        // 注: Googleカレンダーの終日イベントのend.dateは終了日の翌日を指すため、
+        // そのままT00:00:00を使用することで、正しい終了時刻（終了日の24:00 = 翌日の00:00）になる
         const startDateJST = parseISO(`${ev.start.date}T00:00:00+09:00`);
-        const endDateJST = parseISO(`${ev.end.date}T23:59:59+09:00`);
-        
+        const endDateJST = parseISO(`${ev.end.date}T00:00:00+09:00`);
+
         excludedEvents.push({
           id: ev.id,
           summary: ev.summary || "終日イベント",
@@ -148,16 +150,12 @@ export async function getInterviewSlots(formData: FormData) {
 
       // 終日イベントのある日はスキップ
       // 終日イベントとdayStartの日付をJST基準で比較
-      const currentDateJST = tzFormat(curr, "yyyy-MM-dd", { timeZone: TIMEZONE });
       const hasAllDay = excludedEvents.some(e => {
         if (!e.isAllDay) return false;
-        
-        // 終日イベントの開始日と終了日をJST基準で取得
-        const eventStartDateJST = tzFormat(e.start, "yyyy-MM-dd", { timeZone: TIMEZONE });
-        const eventEndDateJST = tzFormat(e.end, "yyyy-MM-dd", { timeZone: TIMEZONE });
-        
-        // 現在の日付が終日イベントの期間内（開始日〜終了日）にあるかチェック
-        return currentDateJST >= eventStartDateJST && currentDateJST <= eventEndDateJST;
+
+        // 終日イベントの期間と現在の日付の時刻で比較
+        // e.start <= dayStart < e.end であればその日は終日イベントの範囲内
+        return e.start <= dayStart && dayStart < e.end;
       });
       if (hasAllDay) continue;
 
