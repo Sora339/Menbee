@@ -2,6 +2,8 @@
 import { auth } from "../../auth";
 import { prisma } from "../../prisma";
 import { CalendarEvent } from "../type";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
+import { TIMEZONE } from "./timezone";
 
 interface GoogleCalendar {
   id: string;
@@ -115,13 +117,14 @@ async function fetchEventsFromCalendars(
   calendars: GoogleCalendar[], 
   accessToken: string
 ): Promise<CalendarEvent[]> {
-  // 3ヶ月間の予定を取得
-  const now = new Date();
-  const threeMonthsLater = new Date();
-  threeMonthsLater.setMonth(now.getMonth() + 3);
+  // 3ヶ月間の予定を取得（"今" を JST に揃えてから計算し、API には UTC で渡す）
+  const nowUtc = new Date();
+  const nowJst = toZonedTime(nowUtc, TIMEZONE);
+  const threeMonthsLaterJst = new Date(nowJst);
+  threeMonthsLaterJst.setMonth(nowJst.getMonth() + 3);
 
-  const timeMin = now.toISOString();
-  const timeMax = threeMonthsLater.toISOString();
+  const timeMin = fromZonedTime(nowJst, TIMEZONE).toISOString();
+  const timeMax = fromZonedTime(threeMonthsLaterJst, TIMEZONE).toISOString();
 
   const allEvents: CalendarEvent[] = [];
   const calendarIds = calendars.map((cal: GoogleCalendar) => cal.id);

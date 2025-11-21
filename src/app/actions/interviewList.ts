@@ -7,11 +7,10 @@ import {
   getDay as dfGetDay,
 } from "date-fns";
 import { ja } from "date-fns/locale";
-import { toZonedTime, format as tzFormat } from "date-fns-tz";
+import { toZonedTime, format as tzFormat, fromZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { EventWithBuffer, TimeSlot } from "../../type";
-
-const TIMEZONE = "Asia/Tokyo";
+import { TIMEZONE } from "@/lib/timezone";
 
 // 曜日のマッピング (0=日曜, …, 6=土曜)
 const dayMapping: Record<string, number> = {
@@ -105,8 +104,11 @@ export async function getInterviewSlots(formData: FormData) {
         // 終日イベントの日付をJST時刻として解釈し、UTC Dateオブジェクトを作成
         // 注: Googleカレンダーの終日イベントのend.dateは終了日の翌日を指すため、
         // そのままT00:00:00を使用することで、正しい終了時刻（終了日の24:00 = 翌日の00:00）になる
-        const startDateJST = parseISO(`${ev.start.date}T00:00:00+09:00`);
-        const endDateJST = parseISO(`${ev.end.date}T00:00:00+09:00`);
+        const startDateJST = fromZonedTime(
+          `${ev.start.date}T00:00:00`,
+          TIMEZONE
+        );
+        const endDateJST = fromZonedTime(`${ev.end.date}T00:00:00`, TIMEZONE);
 
         excludedEvents.push({
           id: ev.id,
@@ -145,8 +147,14 @@ export async function getInterviewSlots(formData: FormData) {
       const dateStr = tzFormat(curr, "yyyy-MM-dd", { timeZone: TIMEZONE });
       
       // 開始／終了時刻をJST時刻として解釈し、UTC Dateオブジェクトを作成
-      const dayStart = parseISO(`${dateStr}T${validatedData.start_time}:00+09:00`);
-      const dayEnd   = parseISO(`${dateStr}T${validatedData.end_time}:00+09:00`);
+      const dayStart = fromZonedTime(
+        `${dateStr}T${validatedData.start_time}:00`,
+        TIMEZONE
+      );
+      const dayEnd = fromZonedTime(
+        `${dateStr}T${validatedData.end_time}:00`,
+        TIMEZONE
+      );
 
       // 終日イベントのある日はスキップ
       // 終日イベントとdayStartの日付をJST基準で比較

@@ -6,10 +6,9 @@ import CalendarPageClient from "@/app/components/calendar-page-client";
 import { getCalendarEvents } from "@/lib/calendar-service";
 import { CalendarEvent as OriginalCalendarEvent } from "../../../type";
 import { FormattedCalendarEvent } from "../../../type";
+import { TIMEZONE } from "@/lib/timezone";
 
 export const dynamic = 'force-dynamic';
-
-const TIMEZONE = "Asia/Tokyo";
 
 function formatCalendarEvent(event: OriginalCalendarEvent): FormattedCalendarEvent[] {
   const formatDateTime = (dateString: string): string => {
